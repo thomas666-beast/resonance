@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
+use Resonance;
+
+Resonance->new->commands->run(@ARGV);
