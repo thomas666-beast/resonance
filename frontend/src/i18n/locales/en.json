@@ -5,8 +5,12 @@
     "friend": "friend",
     "libraryReady": "Your library is ready."
   },
+  "common": {
+    "loading": "Loading…"
+  },
   "nav": {
     "artists": "Artists",
+    "favorites": "Favorites",
     "logout": "Logout",
     "language": "Language"
   },
@@ -39,6 +43,15 @@
     "empty": "No artists yet. Trigger a scan from the backend.",
     "loadFailed": "Failed to load artists",
     "browse": "Browse artists"
+  },
+  "album": {
+    "label": "Album",
+    "trackCount": "{n} tracks",
+    "playAll": "Play all"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "No favorites yet. Tap the heart on any track."
   },
   "scan": {
     "start": "Scan library",

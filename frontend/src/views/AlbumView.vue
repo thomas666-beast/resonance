@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import api from '@/api/client'
+import { useI18n } from 'vue-i18n'
 import { usePlayerStore, type Track } from '@/stores/player'
+import { useFavoritesStore } from '@/stores/favorites'
+import TrackRow from '@/components/TrackRow.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const player = usePlayerStore()
+const favorites = useFavoritesStore()
 
 const album = ref<any>(null)
 const tracks = ref<Track[]>([])
@@ -14,9 +19,12 @@ const error = ref<string | null>(null)
 
 onMounted(async () => {
   try {
-    const { data } = await api.get(`/albums/${route.params.id}`)
-    album.value = data.album
-    tracks.value = data.tracks
+    const [albumRes] = await Promise.all([
+      api.get(`/albums/${route.params.id}`),
+      favorites.loaded ? Promise.resolve() : favorites.load(),
+    ])
+    album.value = albumRes.data.album
+    tracks.value = albumRes.data.tracks
   } catch (e: any) {
     error.value = e.response?.data?.error ?? 'Failed to load album'
   } finally {
@@ -24,45 +32,48 @@ onMounted(async () => {
   }
 })
 
-function play(track: Track) {
-  player.playTrack(track, tracks.value)
+function playAll() {
+  if (tracks.value.length) player.playTrack(tracks.value[0], tracks.value)
 }
-
-function fmt(ms: number | null): string {
-  if (!ms) return '—'
-  const s = Math.floor(ms / 1000)
-  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
-}
-
-const isCurrent = (t: Track) => player.current?.id === t.id
 </script>
 
 <template>
-  <div class="p-8 pb-32">
-    <p v-if="loading">Loading…</p>
+  <div class="p-8 pb-32 max-w-4xl mx-auto">
+    <p v-if="loading" class="text-stone-500">{{ $t('common.loading') }}</p>
     <p v-else-if="error" class="text-red-600">{{ error }}</p>
-    <template v-else-if="album">
-      <h1 class="text-3xl font-bold">{{ album.title }}</h1>
-      <p class="text-gray-600 mb-6">
-        <RouterLink v-if="album.artist_id" :to="`/artists/${album.artist_id}`" class="hover:underline">
-          {{ album.artist_name }}
-        </RouterLink>
-        <span v-if="album.year"> · {{ album.year }}</span>
-      </p>
 
-      <ul class="divide-y">
-        <li
-          v-for="t in tracks"
-          :key="t.id"
-          class="flex items-center gap-4 py-2 cursor-pointer hover:bg-gray-100 px-2 rounded"
-          :class="{ 'bg-gray-100': isCurrent(t) }"
-          @click="play(t)"
+    <template v-else-if="album">
+      <header class="mb-8">
+        <p class="text-xs uppercase tracking-widest text-stone-400 mb-2">
+          {{ $t('album.label') }}
+        </p>
+        <h1 class="text-4xl font-semibold tracking-tight">{{ album.title }}</h1>
+        <p class="text-stone-600 mt-2">
+          <RouterLink v-if="album.artist_id" :to="`/artists/${album.artist_id}`"
+                      class="hover:underline">{{ album.artist_name }}</RouterLink>
+          <span v-if="album.year"> · {{ album.year }}</span>
+          <span v-if="tracks.length"> · {{ $t('album.trackCount', { n: tracks.length }) }}</span>
+        </p>
+
+        <button
+          @click="playAll"
+          :disabled="!tracks.length"
+          class="mt-6 px-5 py-2.5 bg-stone-900 text-white rounded-full text-sm font-medium
+                 hover:bg-stone-800 disabled:opacity-40 transition-colors"
         >
-          <span class="w-8 text-right text-gray-500">{{ t.track_number ?? '·' }}</span>
-          <span class="flex-1">{{ t.title }}</span>
-          <span class="text-gray-500 text-sm">{{ fmt(t.duration_ms) }}</span>
-        </li>
-      </ul>
+          ▶ {{ $t('album.playAll') }}
+        </button>
+      </header>
+
+      <div class="space-y-0.5">
+        <TrackRow
+          v-for="(t, i) in tracks"
+          :key="t.id"
+          :track="t"
+          :queue="tracks"
+          :index="i + 1"
+        />
+      </div>
     </template>
   </div>
 </template>

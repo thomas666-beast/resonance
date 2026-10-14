@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+:root {
+  --color-bg: theme(colors.stone.50);
+  --color-surface: #ffffff;
+  --color-text: theme(colors.stone.900);
+  --color-muted: theme(colors.stone.500);
+  --color-border: theme(colors.stone.200);
+  --color-accent: theme(colors.amber.500);
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.015em;
+}
+
+/* Heart pop animation — 300ms, one-shot */
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.heart-pop {
+  animation: heart-pop 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slim scrollbar in scroll containers */
+.scroll-slim::-webkit-scrollbar { width: 8px; }
+.scroll-slim::-webkit-scrollbar-track { background: transparent; }
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: theme(colors.stone.300);
+  border-radius: 999px;
+}
+.scroll-slim::-webkit-scrollbar-thumb:hover {
+  background: theme(colors.stone.400);
+}

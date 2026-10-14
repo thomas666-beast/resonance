@@ -105,6 +105,11 @@ sub startup ($self) {
     $authed->get('/stream/:track_id') ->to('Stream#stream');
 
     $authed->get('/ws')->to('Scan#ws');
+
+    $authed->get   ('/favorites')                    ->to('Favorites#list');
+    $authed->get   ('/favorites/ids')                ->to('Favorites#ids');
+    $authed->post  ('/favorites/:track_id')          ->to('Favorites#add');
+    $authed->delete('/favorites/:track_id')          ->to('Favorites#remove');
 }
 
 1;
