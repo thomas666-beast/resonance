@@ -79,7 +79,7 @@ sub register ($c) {
     my ($access, $ttl) = _issue_tokens($c, $row->{id});
 
     $c->render(json => {
-        user         => { id => 0 + $row->{id}, username => $row->{username} },
+        user         => { id => 0 + $row->{id}, username => $row->{username}, role => $row->{ role }},
         access_token => $access,
         expires_in   => $ttl,
     });
@@ -109,7 +109,7 @@ sub login ($c) {
     my ($access, $ttl) = _issue_tokens($c, $user->{id});
 
     $c->render(json => {
-        user         => { id => 0 + $user->{id}, username => $user->{username} },
+        user         => { id => 0 + $user->{id}, username => $user->{username}, role => $user->{ role }},
         access_token => $access,
         expires_in   => $ttl,
     });

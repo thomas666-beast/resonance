@@ -1,0 +1,91 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Dotenv;
+use Mojo::Pg;
+use Term::ReadKey;
+use Resonance::Auth qw(hash_password);
+
+# Load .env from repo root
+my $env_file = "$FindBin::Bin/../../.env";
+Dotenv->load($env_file) if -e $env_file;
+
+my $dsn = $ENV{POSTGRES_DSN}
+       // "postgresql://$ENV{POSTGRES_USER}:$ENV{POSTGRES_PASSWORD}"
+        . "\@$ENV{POSTGRES_HOST}:$ENV{POSTGRES_PORT}/$ENV{POSTGRES_DB}";
+my $pg = Mojo::Pg->new($dsn);
+
+# Parse args
+my %opt;
+for (my $i = 0; $i < @ARGV; $i++) {
+    if ($ARGV[$i] eq '--username') { $opt{username} = $ARGV[++$i] }
+    elsif ($ARGV[$i] eq '--email') { $opt{email}    = $ARGV[++$i] }
+}
+
+# Prompt if not given
+unless ($opt{username}) {
+    print "Username: ";
+    chomp(my $u = <STDIN>);
+    $opt{username} = $u;
+}
+unless ($opt{email}) {
+    print "Email (optional, press Enter to skip): ";
+    chomp(my $e = <STDIN>);
+    $opt{email} = $e if length $e;
+}
+
+unless ($opt{username} =~ /^\w{3,64}$/) {
+    die "Username must be 3-64 characters, alphanumeric or underscore\n";
+}
+
+# Read password without echo
+print "Password: ";
+ReadMode('noecho');
+chomp(my $password = <STDIN>);
+ReadMode('normal');
+print "\n";
+
+print "Confirm password: ";
+ReadMode('noecho');
+chomp(my $confirm = <STDIN>);
+ReadMode('normal');
+print "\n";
+
+die "Passwords do not match\n" unless $password eq $confirm;
+die "Password must be at least 8 characters\n" unless length($password) >= 8;
+
+# Upsert
+my $existing = $pg->db->query(
+    'SELECT id, role FROM users WHERE lower(username) = lower(?)',
+    $opt{username},
+)->hash;
+
+my $user;
+if ($existing) {
+    $user = $pg->db->query(
+        q{UPDATE users
+              SET role = 'admin',
+                  password_hash = ?,
+                  is_active = TRUE,
+                  email = COALESCE(?, email),
+                  updated_at = now()
+            WHERE id = ?
+        RETURNING id, username, role},
+        hash_password($password),
+        $opt{email},
+        $existing->{id},
+    )->hash;
+    say "Promoted existing user '$user->{username}' (id $user->{id}) to admin.";
+} else {
+    $user = $pg->db->query(
+        q{INSERT INTO users (username, email, password_hash, role)
+          VALUES (?, ?, ?, 'admin')
+          RETURNING id, username, role},
+        $opt{username},
+        $opt{email},
+        hash_password($password),
+    )->hash;
+    say "Created admin user '$user->{username}' (id $user->{id}).";
+}

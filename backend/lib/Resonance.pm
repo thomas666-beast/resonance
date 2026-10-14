@@ -68,6 +68,7 @@ sub startup ($self) {
     });
 
     # Plugins
+    $self->plugin('Resonance::Plugin::Admin');
     $self->plugin('Resonance::Plugin::Auth');
     $self->plugin('Minion' => { Pg => $self->config->{pg}{dsn} });
     $self->minion->backend->pg->migrations->name('minion')->migrate;
@@ -127,6 +128,12 @@ sub startup ($self) {
 
     $authed->get ('/home')              ->to('Home#index');
     $authed->post('/plays/:track_id')   ->to('Plays#log_play');
+
+    $authed->get('/admin/users')   ->to('Admin#list_users');
+    $authed->post('/admin/users')   ->to('Admin#create_user');
+    $authed->patch('/admin/users/:id')   ->to('Admin#update_user');
+    $authed->delete('/admin/users/:id')   ->to('Admin#delete_user');
+    $authed->get('/admin/stats')   ->to('Admin#stats');
 }
 
 1;

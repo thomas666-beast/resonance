@@ -5,7 +5,8 @@ use Resonance::Auth qw(generate_device_token hash_token);
 
 sub show ($c) {
     my $user = $c->pg->db->query(
-        'SELECT id, username, email, role, created_at FROM users WHERE id = ?',
+        'SELECT id, username, email, role, created_at, last_login_at
+           FROM users WHERE id = ?',
         $c->stash('current_user_id'),
     )->hash;
 

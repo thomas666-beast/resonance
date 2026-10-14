@@ -15,6 +15,7 @@ const router = createRouter({
     { path: '/playlists',    name: 'playlists',   component: () => import('@/views/PlaylistsView.vue'),   meta: { requiresAuth: true } },
     { path: '/playlists/:id', name: 'playlist',   component: () => import('@/views/PlaylistView.vue'),    meta: { requiresAuth: true } },
     { path: '/now-playing',  name: 'now-playing', component: () => import('@/views/NowPlayingView.vue'),  meta: { requiresAuth: true } },
+    { path: '/admin',        name: 'admin',       component: () => import('@/views/AdminView.vue'),       meta: { requiresAuth: true, requiresAdmin: true } },
   ],
 })
 
@@ -30,6 +31,9 @@ router.beforeEach(async (to) => {
   }
   if (to.meta.requiresAuth && !auth.accessToken) {
     return { name: 'login' }
+  }
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { name: 'home' }
   }
   return true
 })

@@ -78,6 +78,9 @@ async function logout() {
           <RouterLink to="/playlists"
             class="px-3 py-1.5 rounded-full hover-surface transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.playlists') }}</RouterLink>
+          <RouterLink v-if="auth.isAdmin" to="/admin"
+            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            active-class="bg-surface-2 font-medium">{{ $t('nav.admin') }}</RouterLink>
         </nav>
 
         <SearchBox />

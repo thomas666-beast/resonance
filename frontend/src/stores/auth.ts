@@ -1,13 +1,20 @@
-// frontend/src/stores/auth.ts
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import api from '@/api/client'
 
+interface User {
+  id: number
+  username: string
+  role?: 'user' | 'admin'
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(null)
-  const user = ref<{ id: number; username: string } | null>(null)
-  const initialized = ref(false)   // ← new
+  const user = ref<User | null>(null)
+  const initialized = ref(false)
+
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
   function setAccessToken(token: string | null) {
     accessToken.value = token
@@ -36,7 +43,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Call this once on app boot, before mounting
   async function init() {
     if (initialized.value) return
     await refresh()
@@ -55,5 +61,6 @@ export const useAuthStore = defineStore('auth', () => {
     try { await api.post('/auth/logout') } finally { clear() }
   }
 
-  return { accessToken, user, initialized, setAccessToken, clear, login, refresh, fetchMe, logout, init }
+  return { accessToken, user, initialized, isAdmin,
+           setAccessToken, clear, login, refresh, fetchMe, logout, init }
 })

@@ -14,7 +14,8 @@
     "favorites": "Favorites",
     "playlists": "Playlists",
     "logout": "Logout",
-    "language": "Language"
+    "language": "Language",
+    "admin": "Admin"
   },
   "auth": {
     "signIn": "Sign in",
@@ -107,5 +108,27 @@
     "back": "Back",
     "nothing": "Nothing is playing",
     "nothingHint": "Pick a track from your library to start listening."
+  },
+  "admin": {
+    "title": "Admin",
+    "users": "Users",
+    "email": "Email",
+    "role": "Role",
+    "lastLogin": "Last login",
+    "actions": "Actions",
+    "newUser": "New user",
+    "newUserPrompt": "Username for new user",
+    "newPasswordPrompt": "Password for new user",
+    "userCreated": "User {name} created",
+    "userDeleted": "User {name} deleted",
+    "roleChanged": "{name} is now {role}",
+    "statusChanged": "Updated {name}",
+    "confirmDelete": "Delete user {name}? This cannot be undone.",
+    "promote": "Make admin",
+    "demote": "Revoke admin",
+    "disable": "Disable",
+    "enable": "Enable",
+    "disabled": "(disabled)",
+    "recentActivity": "Recent activity"
   }
 }
