@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
   <div class="flex items-baseline justify-between mb-4">
-    <h2 class="text-xl font-semibold tracking-tight text-app">{{ title }}</h2>
+    <h2 class="text-heading text-app">{{ title }}</h2>
     <RouterLink
       v-if="moreLabel && moreTo"
       :to="moreTo"

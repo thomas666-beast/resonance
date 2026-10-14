@@ -36,7 +36,7 @@ function isCurrent(): boolean {
            hover-surface transition-colors"
     :class="{ 'bg-surface-2': isCurrent() }"
   >
-    <div class="w-6 text-right text-sm tabular-nums"
+    <div class="w-6 text-right text-sm tabular"
          :class="isCurrent() ? 'text-accent font-semibold' : 'text-dim'">
       {{ index ?? track.track_number ?? '·' }}
     </div>
@@ -66,7 +66,7 @@ function isCurrent(): boolean {
       <AddToPlaylistMenu :track-id="track.id" />
     </div>
 
-    <div class="text-xs text-muted tabular-nums w-12 text-right">
+    <div class="text-xs text-muted tabular w-12 text-right">
       {{ fmt(track.duration_ms) }}
     </div>
   </div>

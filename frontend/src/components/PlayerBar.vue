@@ -77,7 +77,7 @@ function onVolumeInput(e: Event) {
     </div>
 
     <div class="flex-1 flex items-center gap-3">
-      <span class="text-xs text-muted w-10 text-right tabular-nums">
+      <span class="text-xs text-muted w-10 text-right tabular">
         {{ fmt(displayPosition) }}
       </span>
       <input
@@ -91,7 +91,7 @@ function onVolumeInput(e: Event) {
         class="flex-1"
         aria-label="Seek"
       />
-      <span class="text-xs text-muted w-10 tabular-nums">{{ fmt(player.duration) }}</span>
+      <span class="text-xs text-muted w-10 tabular">{{ fmt(player.duration) }}</span>
     </div>
 
     <div class="flex items-center gap-2 w-32">

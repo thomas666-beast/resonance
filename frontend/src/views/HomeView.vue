@@ -48,13 +48,12 @@ onMounted(async () => {
 <template>
   <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
     <header class="mb-10">
-      <h1 class="text-4xl font-semibold tracking-tight">
+      <h1 class="text-display">
         {{ $t('app.welcome', { name: auth.user?.username ?? $t('app.friend') }) }}
       </h1>
-      <p class="text-muted mt-1">{{ $t('app.libraryReady') }}</p>
+      <p class="text-muted mt-2">{{ $t('app.libraryReady') }}</p>
     </header>
 
-    <!-- Skeleton -->
     <div v-if="loading" class="space-y-10">
       <div v-for="i in 3" :key="i" class="space-y-4">
         <Skeleton variant="text" width="12rem" height="1.5rem" />
@@ -65,8 +64,7 @@ onMounted(async () => {
     </div>
 
     <template v-else>
-      <!-- Recently played -->
-      <section v-if="recentlyPlayed.length" class="mb-10">
+      <section v-if="recentlyPlayed.length" class="mb-12">
         <SectionHeader :title="$t('home.recentlyPlayed')" />
         <div class="flex gap-4 overflow-x-auto scroll-slim pb-2">
           <TrackCard
@@ -78,8 +76,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Recently added -->
-      <section v-if="recentlyAdded.length" class="mb-10">
+      <section v-if="recentlyAdded.length" class="mb-12">
         <SectionHeader :title="$t('home.recentlyAdded')" />
         <div class="flex gap-4 overflow-x-auto scroll-slim pb-2">
           <TrackCard
@@ -91,8 +88,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- New albums -->
-      <section v-if="recentAlbums.length" class="mb-10">
+      <section v-if="recentAlbums.length" class="mb-12">
         <SectionHeader
           :title="$t('home.newAlbums')"
           :more-label="$t('nav.albums')"
@@ -103,8 +99,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Favorites -->
-      <section v-if="favorites.length" class="mb-10">
+      <section v-if="favorites.length" class="mb-12">
         <SectionHeader
           :title="$t('home.yourFavorites')"
           :more-label="$t('nav.favorites')"
@@ -120,8 +115,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Playlists -->
-      <section v-if="playlists.length" class="mb-10">
+      <section v-if="playlists.length" class="mb-12">
         <SectionHeader
           :title="$t('home.yourPlaylists')"
           :more-label="$t('nav.playlists')"
@@ -135,7 +129,7 @@ onMounted(async () => {
             class="block bg-surface rounded-xl border border-app p-5
                    hover:shadow-xl hover:-translate-y-0.5 transition-all"
           >
-            <div class="text-lg font-medium truncate">{{ p.name }}</div>
+            <div class="font-medium truncate">{{ p.name }}</div>
             <div class="text-sm text-muted mt-1">
               {{ $t('playlists.trackCount', { n: p.track_count }) }}
             </div>
@@ -143,9 +137,8 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Empty library -->
       <section v-if="!recentlyPlayed.length && !recentlyAdded.length" class="text-center py-16">
-        <h2 class="text-xl font-semibold text-app mb-2">{{ $t('home.emptyTitle') }}</h2>
+        <h2 class="text-title text-app mb-2">{{ $t('home.emptyTitle') }}</h2>
         <p class="text-muted">{{ $t('home.emptyDescription') }}</p>
       </section>
     </template>

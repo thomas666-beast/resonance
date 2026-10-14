@@ -8,6 +8,7 @@ import { usePlaylistsStore, type Playlist } from '@/stores/playlists'
 import { usePlayerStore, type Track } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import TrackRow from '@/components/TrackRow.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import SkeletonList from '@/components/SkeletonList.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
@@ -72,12 +73,10 @@ function playAll() {
     </div>
 
     <template v-else-if="playlist">
-      <header class="mb-8">
-        <p class="text-xs uppercase tracking-widest text-dim mb-2">
-          {{ $t('playlists.label') }}
-        </p>
-        <h1 class="text-4xl font-semibold tracking-tight">{{ playlist.name }}</h1>
-        <p v-if="playlist.description" class="text-muted mt-2">{{ playlist.description }}</p>
+      <header class="mb-10">
+        <p class="text-label mb-2">{{ $t('playlists.label') }}</p>
+        <h1 class="text-display">{{ playlist.name }}</h1>
+        <p v-if="playlist.description" class="text-muted mt-3">{{ playlist.description }}</p>
         <p class="text-dim text-sm mt-1">{{ $t('playlists.trackCount', { n: tracks.length }) }}</p>
 
         <button

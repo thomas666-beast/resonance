@@ -56,22 +56,22 @@ function playAll() {
     </div>
 
     <template v-else-if="album">
-      <header class="mb-8 flex flex-col sm:flex-row gap-6">
+      <header class="mb-10 flex flex-col sm:flex-row gap-6">
         <AlbumCover
           :album-id="album.id"
           :rounded="false"
           class="!w-48 !h-48 !rounded-xl shadow-2xl"
         />
         <div class="flex flex-col justify-end">
-          <p class="text-xs uppercase tracking-widest text-dim mb-2">
-            {{ $t('album.label') }}
-          </p>
-          <h1 class="text-4xl font-semibold tracking-tight">{{ album.title }}</h1>
-          <p class="text-muted mt-2">
+          <p class="text-label mb-2">{{ $t('album.label') }}</p>
+          <h1 class="text-display">{{ album.title }}</h1>
+          <p class="text-muted mt-3">
             <RouterLink v-if="album.artist_id" :to="`/artists/${album.artist_id}`"
-                        class="hover:underline">{{ album.artist_name }}</RouterLink>
-            <span v-if="album.year"> · {{ album.year }}</span>
-            <span v-if="tracks.length"> · {{ $t('album.trackCount', { n: tracks.length }) }}</span>
+                        class="hover:underline text-accent">{{ album.artist_name }}</RouterLink>
+            <span v-if="album.year" class="mx-1">·</span>
+            <span v-if="album.year">{{ album.year }}</span>
+            <span v-if="tracks.length" class="mx-1">·</span>
+            <span v-if="tracks.length">{{ $t('album.trackCount', { n: tracks.length }) }}</span>
           </p>
           <button
             @click="playAll"

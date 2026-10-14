@@ -28,8 +28,10 @@ onMounted(async () => {
     <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
     <p v-else-if="error" class="text-danger">{{ error }}</p>
     <template v-else-if="artist">
-      <h1 class="text-4xl font-semibold tracking-tight mb-8">{{ artist.name }}</h1>
-      <h2 class="text-lg font-semibold mb-3 text-muted">{{ $t('albums.title') }}</h2>
+      <p class="text-label mb-2">{{ $t('artists.title') }}</p>
+      <h1 class="text-display mb-10">{{ artist.name }}</h1>
+
+      <h2 class="text-heading mb-4 text-muted">{{ $t('albums.title') }}</h2>
       <ul class="space-y-1">
         <li v-for="a in albums" :key="a.id">
           <RouterLink :to="`/albums/${a.id}`"
