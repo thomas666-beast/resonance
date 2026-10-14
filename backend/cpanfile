@@ -29,3 +29,8 @@ on 'develop' => sub {
 # ── Auth & crypto ────────────────────────────────────────
 requires 'Crypt::Argon2';
 requires 'Crypt::JWT';
+
+# ── Media scanning ──────────────────────────────────────
+requires 'Audio::Scan';
+requires 'Minion';
+requires 'File::Find::Rule';
