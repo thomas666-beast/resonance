@@ -10,7 +10,9 @@
   },
   "nav": {
     "artists": "Artists",
+    "albums": "Albums",
     "favorites": "Favorites",
+    "playlists": "Playlists",
     "logout": "Logout",
     "language": "Language"
   },
@@ -37,6 +39,11 @@
       "passwordTooShort": "Password must be at least 8 characters"
     }
   },
+  "search": {
+    "placeholder": "Search artists, albums, tracks…",
+    "tracks": "Tracks",
+    "noResults": "No results"
+  },
   "artists": {
     "title": "Artists",
     "loading": "Loading…",
@@ -47,7 +54,9 @@
   "album": {
     "label": "Album",
     "trackCount": "{n} tracks",
-    "playAll": "Play all"
+    "playAll": "Play all",
+    "title": "Albums",
+    "empty": "No albums yet. Scan your library to get started."
   },
   "favorites": {
     "title": "Favorites",
@@ -57,5 +66,19 @@
     "start": "Scan library",
     "running": "Scanning…",
     "done": "Scan complete: {inserted} added, {updated} updated, {failed} failed"
+  },
+  "playlists": {
+    "title": "Playlists",
+    "label": "Playlist",
+    "empty": "No playlists yet. Create one to get started.",
+    "noTracks": "This playlist is empty. Add tracks from any album.",
+    "newPlaylist": "New playlist",
+    "newNamePrompt": "Playlist name",
+    "trackCount": "{n} tracks",
+    "public": "Public",
+    "addTo": "Add to playlist",
+    "noneYet": "No playlists yet",
+    "remove": "Remove from playlist",
+    "confirmRemove": "Remove this track from the playlist?"
   }
 }

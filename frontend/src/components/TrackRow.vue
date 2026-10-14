@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 import { usePlayerStore, type Track } from '@/stores/player'
 import FavoriteButton from './FavoriteButton.vue'
+import AddToPlaylistMenu from './AddToPlaylistMenu.vue'
 
 const props = defineProps<{
   track: Track
@@ -58,8 +59,11 @@ function isCurrent(): boolean {
       </div>
     </div>
 
-    <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+    <slot name="actions" />
+
+    <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
       <FavoriteButton :track-id="track.id" />
+      <AddToPlaylistMenu :track-id="track.id" />
     </div>
 
     <div class="text-xs text-stone-500 tabular-nums w-12 text-right">

@@ -110,6 +110,17 @@ sub startup ($self) {
     $authed->get   ('/favorites/ids')                ->to('Favorites#ids');
     $authed->post  ('/favorites/:track_id')          ->to('Favorites#add');
     $authed->delete('/favorites/:track_id')          ->to('Favorites#remove');
+
+    $authed->get   ('/playlists')                            ->to('Playlists#list');
+    $authed->post  ('/playlists')                            ->to('Playlists#create');
+    $authed->get   ('/playlists/:id')                        ->to('Playlists#show');
+    $authed->patch ('/playlists/:id')                        ->to('Playlists#update');
+    $authed->delete('/playlists/:id')                        ->to('Playlists#remove');
+    $authed->post  ('/playlists/:id/tracks')                 ->to('Playlists#add_track');
+    $authed->delete('/playlists/:id/tracks/:track_id')       ->to('Playlists#remove_track');
+    $authed->patch ('/playlists/:id/reorder')                ->to('Playlists#reorder');
+
+    $authed->get('/search')->to('Search#search');
 }
 
 1;

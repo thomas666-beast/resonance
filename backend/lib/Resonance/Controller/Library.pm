@@ -87,7 +87,8 @@ sub albums ($c) {
 
     my $rows = $c->pg->db->query(
         qq{SELECT a.id, a.title, a.year, a.cover_path,
-                  a.artist_id, ar.name AS artist_name
+                  a.artist_id, ar.name AS artist_name,
+                  (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS track_count
              FROM albums a
              LEFT JOIN artists ar ON ar.id = a.artist_id
              $where

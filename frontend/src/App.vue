@@ -9,7 +9,10 @@ import { SUPPORTED_LOCALES } from '@/i18n'
 import PlayerBar from '@/components/PlayerBar.vue'
 import ScanButton from '@/components/ScanButton.vue'
 import ScanProgress from '@/components/ScanProgress.vue'
+import { usePlaylistsStore } from '@/stores/playlists'
+import SearchBox from '@/components/SearchBox.vue'
 
+const playlistsStore = usePlaylistsStore()
 const auth = useAuthStore()
 const router = useRouter()
 const localeStore = useLocaleStore()
@@ -27,6 +30,7 @@ watch(() => auth.accessToken, (t) => {
   if (t) {
     scan.connect()
     favorites.load()
+    playlistsStore.load()
   } else {
     scan.disconnect()
   }
@@ -48,19 +52,28 @@ async function logout() {
       class="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur-sm"
     >
       <div class="px-6 py-3 flex items-center gap-6 max-w-6xl mx-auto w-full">
-        <RouterLink to="/" class="text-lg font-semibold tracking-tight">
+        <RouterLink to="/" class="text-lg font-semibold tracking-tight shrink-0">
           {{ $t('app.title') }}
         </RouterLink>
-        <nav class="flex items-center gap-1 text-sm">
+
+        <nav class="flex items-center gap-1 text-sm shrink-0">
           <RouterLink to="/artists"
             class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
             active-class="bg-stone-100 font-medium">{{ $t('nav.artists') }}</RouterLink>
+          <RouterLink to="/albums"
+            class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
+            active-class="bg-stone-100 font-medium">{{ $t('nav.albums') }}</RouterLink>
           <RouterLink to="/favorites"
             class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
             active-class="bg-stone-100 font-medium">{{ $t('nav.favorites') }}</RouterLink>
+          <RouterLink to="/playlists"
+            class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
+            active-class="bg-stone-100 font-medium">{{ $t('nav.playlists') }}</RouterLink>
         </nav>
 
-        <div class="ml-auto flex items-center gap-3 text-sm">
+        <SearchBox />
+
+        <div class="ml-auto flex items-center gap-3 text-sm shrink-0">
           <ScanButton />
           <select
             v-model="localeStore.current"

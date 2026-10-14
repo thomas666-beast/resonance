@@ -11,6 +11,9 @@ const router = createRouter({
     { path: '/artists/:id', name: 'artist',   component: () => import('@/views/ArtistView.vue'),  meta: { requiresAuth: true } },
     { path: '/albums/:id',  name: 'album',    component: () => import('@/views/AlbumView.vue'),   meta: { requiresAuth: true } },
     { path: '/favorites', name: 'favorites', component: () => import('@/views/FavoritesView.vue'), meta: { requiresAuth: true } },
+    { path: '/playlists',     name: 'playlists', component: () => import('@/views/PlaylistsView.vue'), meta: { requiresAuth: true } },
+    { path: '/playlists/:id', name: 'playlist',  component: () => import('@/views/PlaylistView.vue'),  meta: { requiresAuth: true } },
+    { path: '/albums',      name: 'albums',   component: () => import('@/views/AlbumsView.vue'),  meta: { requiresAuth: true } },
   ],
 })
 
