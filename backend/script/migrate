@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Dotenv;
+use Mojo::Pg;
+
+my $env_file = "$FindBin::Bin/../../.env";
+Dotenv->load($env_file) if -e $env_file;
+
+my $dsn = $ENV{POSTGRES_DSN}
+       // "postgresql://$ENV{POSTGRES_USER}:$ENV{POSTGRES_PASSWORD}"
+        . "\@$ENV{POSTGRES_HOST}:$ENV{POSTGRES_PORT}/$ENV{POSTGRES_DB}";
+
+my $pg = Mojo::Pg->new($dsn);
+my $m  = $pg->migrations->from_dir("$FindBin::Bin/../migrations");
+
+my $cmd = shift @ARGV // 'up';
+
+if ($cmd eq 'up') {
+    $m->migrate;
+    say "Migrated to version " . ($m->active // 0);
+}
+elsif ($cmd eq 'down') {
+    my $target = shift @ARGV // 0;
+    $m->migrate($target);
+    say "Migrated down to version $target";
+}
+elsif ($cmd eq 'status') {
+    say "Active: " . ($m->active // 0);
+    say "Latest: " . ($m->latest // 0);
+}
+else {
+    die "Usage: $0 [up|down [target]|status]\n";
+}
