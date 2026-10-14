@@ -9,8 +9,10 @@ sub register ($self, $app, $conf) {
             my $header = $c->req->headers->authorization // '';
             my ($scheme, $token) = split /\s+/, $header, 2;
 
-            # Fallback: ?token=… — only allowed on /api/stream/*
-            if ((!defined $scheme || lc($scheme) ne 'bearer') && $c->req->url->path =~ m{^/api/stream/}) {
+            # Fallback: ?token=… on stream and websocket routes only
+            my $path = $c->req->url->path // '';
+            if ((!defined $scheme || lc($scheme) ne 'bearer')
+                && ($path =~ m{^/api/stream/} || $path =~ m{^/api/ws})) {
                 $token = $c->param('token');
                 $scheme = 'bearer' if defined $token;
             }

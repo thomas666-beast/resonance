@@ -57,4 +57,34 @@ sub trigger ($c) {
     });
 }
 
+sub ws ($c) {
+    my $log = $c->app->log;
+
+    $c->websocket(sub ($c) {
+        $log->debug("WS client connected");
+
+        # Per-client Redis PubSub subscription.
+        # Must stay alive for the lifetime of the socket.
+        my $unlisten;
+        my $pubsub = $c->redis->pubsub;
+
+        $unlisten = $pubsub->listen('resonance:scan' => sub ($pubsub, $message, $channel) {
+            $c->send({json => {channel => $channel, data => $message}});
+        });
+
+        # Client disconnect → clean up the Redis subscription
+        $c->on(finish => sub ($c, $code, $reason) {
+            $log->debug("WS client disconnected ($code)");
+            $pubsub->unlisten($unlisten) if $unlisten;
+        });
+
+        # We don't expect messages from the client — ignore anything received
+        $c->on(message => sub ($c, $msg) {
+            $log->debug("WS message ignored: $msg");
+        });
+    });
+}
+
+1;
+
 1;

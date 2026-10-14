@@ -39,5 +39,10 @@
     "empty": "No artists yet. Trigger a scan from the backend.",
     "loadFailed": "Failed to load artists",
     "browse": "Browse artists"
+  },
+  "scan": {
+    "start": "Scan library",
+    "running": "Scanning…",
+    "done": "Scan complete: {inserted} added, {updated} updated, {failed} failed"
   }
 }

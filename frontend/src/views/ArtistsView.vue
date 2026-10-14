@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api/client'
 import { useI18n } from 'vue-i18n'
+import { useScanStore } from '@/stores/scan'
 
 const { t } = useI18n()
+const scan = useScanStore()
 
 interface Artist { id: number; name: string; sort_name: string | null }
-
 const artists = ref<Artist[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-onMounted(async () => {
+async function load() {
   try {
     const { data } = await api.get('/artists')
     artists.value = data.artists
@@ -21,6 +22,13 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+}
+
+onMounted(load)
+
+// When a scan finishes, reload
+watch(() => scan.lastResult, (r) => {
+  if (r) load()
 })
 </script>
 

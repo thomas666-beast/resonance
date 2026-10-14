@@ -103,6 +103,8 @@ sub startup ($self) {
     $authed->get('/albums/:id')       ->to('Library#album_detail');
     $authed->get('/tracks/:id')       ->to('Library#track_detail');
     $authed->get('/stream/:track_id') ->to('Stream#stream');
+
+    $authed->get('/ws')->to('Scan#ws');
 }
 
 1;
