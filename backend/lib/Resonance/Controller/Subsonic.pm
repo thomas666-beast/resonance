@@ -7,6 +7,8 @@ use Resonance::Subsonic::Format qw(
     format_music_folder
 );
 use Resonance::Controller::Subsonic::Browse ();
+use Resonance::Controller::Subsonic::Media  ();
+use Resonance::Controller::Subsonic::Lists  ();
 
 # ── dispatcher ───────────────────────────────────────────
 
@@ -50,6 +52,25 @@ sub dispatch ($c) {
         getArtistInfo2  => \&Resonance::Controller::Subsonic::Browse::get_artist_info2,
         getAlbumInfo2   => \&Resonance::Controller::Subsonic::Browse::get_album_info2,
         search3         => \&Resonance::Controller::Subsonic::Browse::search3,
+
+        # Media
+        stream          => \&Resonance::Controller::Subsonic::Media::stream,
+        download        => \&Resonance::Controller::Subsonic::Media::download,
+        getCoverArt     => \&Resonance::Controller::Subsonic::Media::get_cover_art,
+
+        # Lists
+        getPlaylists    => \&Resonance::Controller::Subsonic::Lists::get_playlists,
+        getPlaylist     => \&Resonance::Controller::Subsonic::Lists::get_playlist,
+        createPlaylist  => \&Resonance::Controller::Subsonic::Lists::create_playlist,
+        updatePlaylist  => \&Resonance::Controller::Subsonic::Lists::update_playlist,
+        deletePlaylist  => \&Resonance::Controller::Subsonic::Lists::delete_playlist,
+        star            => \&Resonance::Controller::Subsonic::Lists::star,
+        unstar          => \&Resonance::Controller::Subsonic::Lists::unstar,
+        getStarred      => \&Resonance::Controller::Subsonic::Lists::get_starred2,
+        getStarred2     => \&Resonance::Controller::Subsonic::Lists::get_starred2,
+        scrobble        => \&Resonance::Controller::Subsonic::Lists::scrobble,
+        getScanStatus   => \&Resonance::Controller::Subsonic::Lists::get_scan_status,
+        startScan       => \&Resonance::Controller::Subsonic::Lists::start_scan,
     );
 
     my $handler = $handlers{$method};
