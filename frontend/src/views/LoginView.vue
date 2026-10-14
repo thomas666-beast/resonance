@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 
@@ -20,7 +20,7 @@ async function submit() {
     await auth.login(username.value, password.value)
     router.push({ name: 'home' })
   } catch (e: any) {
-    error.value = e.response?.data?.error ?? 'Login failed'
+    error.value = e.response?.data?.error ?? t('auth.errors.loginFailed')
   } finally {
     loading.value = false
   }
@@ -30,11 +30,10 @@ async function submit() {
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50">
     <form @submit.prevent="submit" class="bg-white p-8 rounded-lg shadow w-full max-w-sm">
-      <!-- LoginView.vue -->
       <h1 class="text-2xl font-bold mb-6">{{ $t('auth.signInTo') }}</h1>
 
       <label class="block mb-4">
-        <span class="text-sm text-gray-700">Username</span>
+        <span class="text-sm text-gray-700">{{ $t('auth.username') }}</span>
         <input
           v-model="username"
           type="text"
@@ -45,7 +44,7 @@ async function submit() {
       </label>
 
       <label class="block mb-6">
-        <span class="text-sm text-gray-700">Password</span>
+        <span class="text-sm text-gray-700">{{ $t('auth.password') }}</span>
         <input
           v-model="password"
           type="password"
@@ -62,12 +61,12 @@ async function submit() {
         :disabled="loading"
         class="w-full bg-black text-white py-2 rounded disabled:opacity-50"
       >
-        {{ loading ? 'Signing in…' : 'Sign in' }}
+        {{ loading ? $t('auth.signingIn') : $t('auth.signIn') }}
       </button>
 
       <p class="text-sm text-gray-600 mt-4 text-center">
-        No account?
-        <RouterLink to="/register" class="underline">Register</RouterLink>
+        {{ $t('auth.noAccount') }}
+        <RouterLink to="/register" class="underline">{{ $t('auth.registerLink') }}</RouterLink>
       </p>
     </form>
   </div>

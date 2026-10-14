@@ -1,17 +1,22 @@
 {
   "app": {
     "title": "Resonance",
-    "welcome": "Welcome back, {name}"
+    "welcome": "Welcome back, {name}",
+    "friend": "friend",
+    "libraryReady": "Your library is ready."
   },
   "nav": {
     "artists": "Artists",
-    "albums": "Albums",
-    "logout": "Logout"
+    "logout": "Logout",
+    "language": "Language"
   },
   "auth": {
     "signIn": "Sign in",
     "signInTo": "Sign in to Resonance",
-    "register": "Create your account",
+    "signingIn": "Signing in…",
+    "registerTitle": "Create your account",
+    "registering": "Creating…",
+    "createAccount": "Create account",
     "username": "Username",
     "password": "Password",
     "email": "Email",
@@ -19,14 +24,20 @@
     "confirmPassword": "Confirm password",
     "noAccount": "No account?",
     "hasAccount": "Already have an account?",
-    "signingIn": "Signing in…",
-    "creating": "Creating…",
-    "createAccount": "Create account"
+    "registerLink": "Register",
+    "signInLink": "Sign in",
+    "errors": {
+      "loginFailed": "Login failed",
+      "registerFailed": "Registration failed",
+      "passwordsMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 8 characters"
+    }
   },
   "artists": {
     "title": "Artists",
     "loading": "Loading…",
     "empty": "No artists yet. Trigger a scan from the backend.",
-    "loadFailed": "Failed to load artists"
+    "loadFailed": "Failed to load artists",
+    "browse": "Browse artists"
   }
 }

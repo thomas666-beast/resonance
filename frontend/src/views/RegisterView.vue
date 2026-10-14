@@ -3,7 +3,9 @@ import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import api from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 const router = useRouter()
 
@@ -18,11 +20,11 @@ async function submit() {
   error.value = null
 
   if (password.value !== confirm.value) {
-    error.value = 'Passwords do not match'
+    error.value = t('auth.errors.passwordsMismatch')
     return
   }
   if (password.value.length < 8) {
-    error.value = 'Password must be at least 8 characters'
+    error.value = t('auth.errors.passwordTooShort')
     return
   }
 
@@ -36,7 +38,7 @@ async function submit() {
     auth.setAccessToken(data.access_token)
     router.push({ name: 'home' })
   } catch (e: any) {
-    error.value = e.response?.data?.error ?? 'Registration failed'
+    error.value = e.response?.data?.error ?? t('auth.errors.registerFailed')
   } finally {
     loading.value = false
   }
@@ -46,28 +48,28 @@ async function submit() {
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50">
     <form @submit.prevent="submit" class="bg-white p-8 rounded-lg shadow w-full max-w-sm">
-      <h1 class="text-2xl font-bold mb-6">Create your account</h1>
+      <h1 class="text-2xl font-bold mb-6">{{ $t('auth.registerTitle') }}</h1>
 
       <label class="block mb-4">
-        <span class="text-sm text-gray-700">Username</span>
+        <span class="text-sm text-gray-700">{{ $t('auth.username') }}</span>
         <input v-model="username" type="text" required autocomplete="username"
                class="mt-1 w-full border rounded px-3 py-2" />
       </label>
 
       <label class="block mb-4">
-        <span class="text-sm text-gray-700">Email <span class="text-gray-400">(optional)</span></span>
+        <span class="text-sm text-gray-700">{{ $t('auth.emailOptional') }}</span>
         <input v-model="email" type="email" autocomplete="email"
                class="mt-1 w-full border rounded px-3 py-2" />
       </label>
 
       <label class="block mb-4">
-        <span class="text-sm text-gray-700">Password</span>
+        <span class="text-sm text-gray-700">{{ $t('auth.password') }}</span>
         <input v-model="password" type="password" required autocomplete="new-password"
                class="mt-1 w-full border rounded px-3 py-2" />
       </label>
 
       <label class="block mb-6">
-        <span class="text-sm text-gray-700">Confirm password</span>
+        <span class="text-sm text-gray-700">{{ $t('auth.confirmPassword') }}</span>
         <input v-model="confirm" type="password" required autocomplete="new-password"
                class="mt-1 w-full border rounded px-3 py-2" />
       </label>
@@ -76,12 +78,12 @@ async function submit() {
 
       <button type="submit" :disabled="loading"
               class="w-full bg-black text-white py-2 rounded disabled:opacity-50">
-        {{ loading ? 'Creating…' : 'Create account' }}
+        {{ loading ? $t('auth.registering') : $t('auth.createAccount') }}
       </button>
 
       <p class="text-sm text-gray-600 mt-4 text-center">
-        Already have an account?
-        <RouterLink to="/login" class="underline">Sign in</RouterLink>
+        {{ $t('auth.hasAccount') }}
+        <RouterLink to="/login" class="underline">{{ $t('auth.signInLink') }}</RouterLink>
       </p>
     </form>
   </div>
