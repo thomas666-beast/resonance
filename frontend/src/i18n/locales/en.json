@@ -114,12 +114,15 @@
     "users": "Users",
     "email": "Email",
     "role": "Role",
+    "roleUser": "User",
+    "roleAdmin": "Admin",
     "lastLogin": "Last login",
     "actions": "Actions",
     "newUser": "New user",
-    "newUserPrompt": "Username for new user",
-    "newPasswordPrompt": "Password for new user",
-    "userCreated": "User {name} created",
+    "createUser": "Create user",
+    "usernameInvalid": "Username must be 3–64 characters (letters, numbers, underscore).",
+    "usernameTaken": "That username is already taken.",
+    "userCreated": "User created",
     "userDeleted": "User {name} deleted",
     "roleChanged": "{name} is now {role}",
     "statusChanged": "Updated {name}",
@@ -129,6 +132,11 @@
     "disable": "Disable",
     "enable": "Enable",
     "disabled": "(disabled)",
-    "recentActivity": "Recent activity"
+    "you": "you",
+    "searchPlaceholder": "Search users…",
+    "noResults": "No users match your search.",
+    "noUsers": "No users yet.",
+    "recentActivity": "Recent activity",
+    "delete": "Delete"
   }
 }
