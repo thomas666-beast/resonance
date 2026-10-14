@@ -6,14 +6,59 @@ use Resonance::Auth qw(hash_password);
 # ── users ────────────────────────────────────────────────
 
 sub list_users ($c) {
+    my $page     = $c->param('page')     // 1;
+    my $per_page = $c->param('per_page') // 25;
+    my $q        = $c->param('q');
+    my $sort     = $c->param('sort')     // 'created_at';
+    my $dir      = $c->param('dir')      // 'desc';
+
+    $page     = 1    unless $page     =~ /^\d+$/ && $page     >= 1;
+    $per_page = 25   unless $per_page =~ /^\d+$/;
+    $per_page = 100  if $per_page > 100;
+    $per_page = 1    if $per_page < 1;
+
+    my %allowed_sort = map { $_ => 1 } qw/created_at username last_login_at role is_active/;
+    $sort = 'created_at' unless $allowed_sort{$sort};
+    $dir  = $dir eq 'asc' ? 'ASC' : 'DESC';
+
+    my @where;
+    my @args;
+
+    if (defined $q && length $q) {
+        push @where, '(username ILIKE ? OR email ILIKE ?)';
+        push @args, "%$q%", "%$q%";
+    }
+
+    my $where_sql = @where ? 'WHERE ' . join(' AND ', @where) : '';
+
+    my $total = $c->pg->db->query(
+        "SELECT count(*) AS n FROM users $where_sql",
+        @args,
+    )->hash->{n} + 0;
+
+    my $offset = ($page - 1) * $per_page;
+
+    # Whitelist as safe SQL fragment — sort and dir are validated above
+    my $order_sql = "ORDER BY $sort $dir";
+
     my $users = $c->pg->db->query(
-        q{SELECT id, username, email, role, is_active,
-                 created_at, last_login_at
-            FROM users
-           ORDER BY created_at DESC},
+        qq{SELECT id, username, email, role, is_active,
+                  created_at, last_login_at
+             FROM users
+             $where_sql
+             $order_sql
+             LIMIT ? OFFSET ?},
+        @args, $per_page, $offset,
     )->hashes->to_array;
 
-    $c->render(json => { users => $users });
+    $c->render(json => {
+        users    => $users,
+        total    => $total,
+        page     => $page,
+        per_page => $per_page,
+        sort     => $sort,
+        dir      => lc $dir,
+    });
 }
 
 sub create_user ($c) {
@@ -22,6 +67,8 @@ sub create_user ($c) {
 
     return $c->render(status => 400, json => { error => 'username_required' })
         unless defined $u && length $u;
+    return $c->render(status => 400, json => { error => 'username_invalid' })
+        unless $u =~ /^\w{3,64}$/;
     return $c->render(status => 400, json => { error => 'password_too_short' })
         unless defined $p && length($p) >= 8;
 
@@ -31,7 +78,7 @@ sub create_user ($c) {
         $c->pg->db->query(
             q{INSERT INTO users (username, email, password_hash, role)
               VALUES (?, ?, ?, ?)
-          RETURNING id, username, email, role, is_active, created_at},
+          RETURNING id, username, email, role, is_active, created_at, last_login_at},
             $u, $body->{email}, hash_password($p), $role,
         )->hash;
     };
@@ -49,7 +96,6 @@ sub update_user ($c) {
 
     my $body = $c->req->json // {};
 
-    # Don't let an admin demote or deactivate themselves
     if ($id == $c->stash('current_user_id')) {
         if (exists $body->{role} && $body->{role} ne 'admin') {
             return $c->render(status => 400, json => { error => 'cannot_demote_self' });
@@ -69,7 +115,7 @@ sub update_user ($c) {
                   email     = COALESCE(?, email),
                   updated_at = now()
             WHERE id = ?
-        RETURNING id, username, email, role, is_active, created_at},
+        RETURNING id, username, email, role, is_active, created_at, last_login_at},
         $new_role,
         exists $body->{is_active} ? ($body->{is_active} ? 1 : 0) : undef,
         $body->{email},

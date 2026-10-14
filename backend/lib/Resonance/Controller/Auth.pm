@@ -108,8 +108,14 @@ sub login ($c) {
 
     my ($access, $ttl) = _issue_tokens($c, $user->{id});
 
+    $c->pg->db->query(
+        'UPDATE users set last_login_at = now()
+            WHERE lower(username) = lower(?)',
+        $u,
+    );
+
     $c->render(json => {
-        user         => { id => 0 + $user->{id}, username => $user->{username}, role => $user->{ role }},
+        user         => { id => 0 + $user->{id}, username => $user->{username}, role => $user->{ role } },
         access_token => $access,
         expires_in   => $ttl,
     });

@@ -138,5 +138,18 @@
     "noUsers": "No users yet.",
     "recentActivity": "Recent activity",
     "delete": "Delete"
+  },
+  "settings": {
+    "title": "Settings",
+    "subsonicTitle": "Subsonic API access",
+    "subsonicDescription": "Set a password to use third-party Subsonic clients (DSub, Symfonium, play:Sub, Sonixd, etc.) against this server. This is a separate password from your login — changing it here does not affect how you sign in to the web app.",
+    "subsonicPassword": "Subsonic password",
+    "subsonicClear": "Leave blank and save to disable Subsonic access.",
+    "subsonicSet": "Subsonic password saved",
+    "subsonicCleared": "Subsonic access disabled",
+    "status": "Status",
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "save": "Save"
   }
 }

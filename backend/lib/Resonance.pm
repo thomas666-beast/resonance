@@ -80,6 +80,10 @@ sub startup ($self) {
 
     # Routes
     my $r   = $self->routes;
+
+    # Subsonic protocol — mounted at /rest/* for client compatibility
+    $r->any('/rest/:method')->to('Subsonic#dispatch');
+
     my $api = $r->under('/api')->to('Base#api_headers');
 
     $api->get ('/health')          ->to('Health#check');
@@ -134,6 +138,9 @@ sub startup ($self) {
     $authed->patch('/admin/users/:id')   ->to('Admin#update_user');
     $authed->delete('/admin/users/:id')   ->to('Admin#delete_user');
     $authed->get('/admin/stats')   ->to('Admin#stats');
+
+    $authed->post('/me/subsonic-password') ->to('Me#set_subsonic_password');
+    $authed->get ('/me/subsonic')          ->to('Me#subsonic_status');
 }
 
 1;

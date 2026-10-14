@@ -2,6 +2,7 @@ package Resonance::Controller::Me;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 
 use Resonance::Auth qw(generate_device_token hash_token);
+use Resonance::Subsonic::Auth qw(encrypt_subsonic_password);
 
 sub show ($c) {
     my $user = $c->pg->db->query(
@@ -81,6 +82,42 @@ sub trigger_scan ($c) {
     my $job_id = $c->minion->enqueue('scan' => [$sp->{id}]);
 
     $c->render(json => { job_id => $job_id, scan_path_id => $sp->{id} });
+}
+
+sub set_subsonic_password ($c) {
+    my $body = $c->req->json // {};
+    my $pw   = $body->{subsonic_password};
+
+    # Allow clearing
+    if (!defined $pw || $pw eq '') {
+        $c->pg->db->query(
+            'UPDATE users SET subsonic_password_enc = NULL WHERE id = ?',
+            $c->stash('current_user_id'),
+        );
+        return $c->render(json => { ok => \1, configured => \0 });
+    }
+
+    if (length($pw) < 8) {
+        return $c->render(status => 400, json => { error => 'password_too_short' });
+    }
+
+    my $enc = encrypt_subsonic_password($c->config->{jwt}{secret}, $pw);
+
+    $c->pg->db->query(
+        'UPDATE users SET subsonic_password_enc = ? WHERE id = ?',
+        $enc, $c->stash('current_user_id'),
+    );
+
+    $c->render(json => { ok => \1, configured => \1 });
+}
+
+sub subsonic_status ($c) {
+    my $configured = $c->pg->db->query(
+        'SELECT subsonic_password_enc IS NOT NULL AS c FROM users WHERE id = ?',
+        $c->stash('current_user_id'),
+    )->hash->{c};
+
+    $c->render(json => { configured => $configured ? \1 : \0 });
 }
 
 1;
