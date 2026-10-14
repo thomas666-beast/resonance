@@ -61,7 +61,7 @@ function isCurrent(): boolean {
 
     <slot name="actions" />
 
-    <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+    <div class="flex items-center gap-1 text-muted group-hover:text-app transition-colors">
       <FavoriteButton :track-id="track.id" />
       <AddToPlaylistMenu :track-id="track.id" />
     </div>
