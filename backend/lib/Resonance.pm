@@ -29,6 +29,8 @@ sub startup ($self) {
     },
   });
 
+  $self->config->{allow_registration} = ($ENV{ALLOW_REGISTRATION} // '0') eq '1' ? 1 : 0;
+
   # Logging
   $self->log->level($self->config->{log_level});
 
@@ -47,10 +49,33 @@ sub startup ($self) {
   # Routes
   my $r = $self->routes;
 
+  # JWT config
+  $self->config->{jwt} = {
+    secret     => $ENV{JWT_SECRET} // die("JWT_SECRET is required\n"),
+    access_ttl => $ENV{JWT_ACCESS_TTL} // 900,
+    refresh_ttl => $ENV{JWT_REFRESH_TTL} // 2592000,
+  };
+
+  # Auth plugin
+  $self->plugin('Resonance::Plugin::Auth');
+
   # /api namespace
   my $api = $r->under('/api')->to('Base#api_headers');
 
   $api->get('/health')->to('Health#check');
+
+  # Public auth routes
+  $api->post('/auth/register')->to('Auth#register');
+  $api->post('/auth/login')   ->to('Auth#login');
+  $api->post('/auth/refresh') ->to('Auth#refresh');
+
+  # Protected
+  my $authed = $api->auth_required;
+  $authed->post('/auth/logout')->to('Auth#logout');
+  $authed->get ('/auth/me')    ->to('Me#show');
+  $authed->get ('/auth/tokens')->to('Me#list_tokens');
+  $authed->post('/auth/tokens')->to('Me#create_token');
+  $authed->delete('/auth/tokens/:id')->to('Me#delete_token');
 }
 
 1;
