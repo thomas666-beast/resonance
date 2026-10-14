@@ -52,8 +52,8 @@ sub stream ($c) {
     # No range — send whole file
     $c->res->headers->header('Accept-Ranges' => 'bytes');
     $c->res->headers->content_type($mime);
-    $c->res->headers->content_length($size);
-    $c->reply->file($path);
+    $c->res->content->asset(Mojo::Asset::File->new(path => $path));
+    $c->rendered(200);
 }
 
 1;
