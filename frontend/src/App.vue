@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue'
-import { RouterView, RouterLink, useRouter } from 'vue-router'
+import { onMounted, onUnmounted, watch, computed } from 'vue'
+import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useScanStore } from '@/stores/scan'
@@ -17,10 +17,13 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const localeStore = useLocaleStore()
 const scan = useScanStore()
 const favorites = useFavoritesStore()
 const playlistsStore = usePlaylistsStore()
+
+const isNowPlaying = computed(() => route.name === 'now-playing')
 
 useKeyboard()
 
@@ -54,7 +57,7 @@ async function logout() {
 <template>
   <div class="min-h-screen flex flex-col bg-app text-app">
     <header
-      v-if="auth.accessToken"
+      v-if="auth.accessToken && !isNowPlaying"
       class="sticky top-0 z-20 border-b border-app bg-surface/90 backdrop-blur-sm"
     >
       <div class="px-6 py-3 flex items-center gap-6 max-w-6xl mx-auto w-full">
@@ -98,13 +101,13 @@ async function logout() {
       </div>
     </header>
 
-    <ScanProgress />
+    <ScanProgress v-if="!isNowPlaying" />
 
-    <main class="flex-1 pb-28">
+    <main class="flex-1" :class="!isNowPlaying && 'pb-28'">
       <RouterView />
     </main>
 
-    <PlayerBar v-if="auth.accessToken" />
+    <PlayerBar v-if="auth.accessToken && !isNowPlaying" />
     <ToastHost />
   </div>
 </template>

@@ -101,5 +101,11 @@
     "start": "Scan library",
     "running": "Scanning…",
     "done": "Scan complete: {inserted} added, {updated} updated, {failed} failed"
+  },
+  "nowPlaying": {
+    "label": "Now Playing",
+    "back": "Back",
+    "nothing": "Nothing is playing",
+    "nothingHint": "Pick a track from your library to start listening."
   }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import AlbumCover from './AlbumCover.vue'
 
@@ -40,20 +41,26 @@ function onVolumeInput(e: Event) {
     class="fixed bottom-0 left-0 right-0 border-t border-app bg-surface/95 backdrop-blur-sm
            px-6 py-3 flex items-center gap-4 shadow-2xl z-30 text-app"
   >
-    <div class="flex items-center gap-3 min-w-0 flex-1">
+    <RouterLink
+      to="/now-playing"
+      class="flex items-center gap-3 min-w-0 flex-1 group"
+    >
       <AlbumCover
         v-if="player.current.album_id"
         :album-id="player.current.album_id"
         size="sm"
+        class="group-hover:shadow-lg transition-shadow"
       />
       <div class="min-w-0">
-        <div class="text-sm font-medium truncate">{{ player.current.title }}</div>
+        <div class="text-sm font-medium truncate group-hover:text-accent transition-colors">
+          {{ player.current.title }}
+        </div>
         <div class="text-xs text-muted truncate">
           {{ player.current.artist_name ?? '—' }}
           <span v-if="player.current.album_title"> · {{ player.current.album_title }}</span>
         </div>
       </div>
-    </div>
+    </RouterLink>
 
     <div class="flex items-center gap-2">
       <button
