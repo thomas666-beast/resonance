@@ -2,10 +2,12 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePlaylistsStore } from '@/stores/playlists'
+import { useToastStore } from '@/stores/toast'
 
 const props = defineProps<{ trackId: number }>()
 const { t } = useI18n()
 const playlists = usePlaylistsStore()
+const toast = useToastStore()
 
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -16,18 +18,30 @@ function toggle(e: MouseEvent) {
   if (open.value && !playlists.loaded) playlists.load()
 }
 
-async function pick(id: number) {
-  await playlists.addTrack(id, props.trackId)
-  open.value = false
+async function pick(id: number, name: string) {
+  try {
+    await playlists.addTrack(id, props.trackId)
+    toast.success(t('toasts.addedToPlaylist', { name }))
+  } catch {
+    toast.error(t('toasts.genericError'))
+  } finally {
+    open.value = false
+  }
 }
 
 async function newPlaylist(e: MouseEvent) {
   e.stopPropagation()
   const name = prompt(t('playlists.newNamePrompt'))
   if (!name) return
-  const pl = await playlists.create(name)
-  await playlists.addTrack(pl.id, props.trackId)
-  open.value = false
+  try {
+    const pl = await playlists.create(name)
+    await playlists.addTrack(pl.id, props.trackId)
+    toast.success(t('toasts.createdAndAdded', { name }))
+  } catch {
+    toast.error(t('toasts.genericError'))
+  } finally {
+    open.value = false
+  }
 }
 
 function onDocClick(e: MouseEvent) {
@@ -59,7 +73,7 @@ onUnmounted(() => document.removeEventListener('click', onDocClick))
       <button
         v-for="p in playlists.items"
         :key="p.id"
-        @click.stop="pick(p.id)"
+        @click.stop="pick(p.id, p.name)"
         class="block w-full text-left px-3 py-1.5 hover:bg-stone-100 truncate"
       >
         {{ p.name }}

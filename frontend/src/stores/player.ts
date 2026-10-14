@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { Howl, Howler } from 'howler'
-import api from '@/api/client'
 
 export interface Track {
   id: number
@@ -19,16 +18,18 @@ export const usePlayerStore = defineStore('player', () => {
   const queue = ref<Track[]>([])
   const index = ref(-1)
   const playing = ref(false)
-  const position = ref(0)      // seconds
-  const duration = ref(0)      // seconds
+  const position = ref(0)
+  const duration = ref(0)
   const volume = ref(Number(localStorage.getItem('resonance_volume') ?? 1))
 
   let howl: Howl | null = null
   let rafId: number | null = null
 
-  const current = computed<Track | null>(() =>
-    index.value >= 0 && index.value < queue.value.length ? queue.value[index.value] : null,
-  )
+  const current = computed<Track | null>(() => {
+    const i = index.value
+    if (i < 0 || i >= queue.value.length) return null
+    return queue.value[i] ?? null
+  })
 
   function stopTicker() {
     if (rafId !== null) {
@@ -39,44 +40,29 @@ export const usePlayerStore = defineStore('player', () => {
 
   function tick() {
     if (howl && playing.value) {
-      position.value = howl.seek() as number
+      const s = howl.seek()
+      if (typeof s === 'number') position.value = s
     }
     rafId = requestAnimationFrame(tick)
   }
 
   function load(track: Track) {
-    // Tear down previous Howl
-    const token = (window as any).__resonance_access_token
-
-
     if (howl) {
       howl.unload()
       howl = null
     }
     stopTicker()
 
-    // The stream endpoint requires the access token.
-    // html5: true → streams from server, leverages our Range support.
+    const token = (window as any).__resonance_access_token
+
     howl = new Howl({
-      // frontend/src/stores/player.ts — inside load(), replace the src line:
-      src: [`/api/stream/${track.id}?token=${encodeURIComponent(token)}`],
+      src: [`/api/stream/${track.id}?token=${encodeURIComponent(token ?? '')}`],
       html5: true,
       volume: volume.value,
-      onload: () => {
-        duration.value = howl?.duration() ?? 0
-      },
-      onplay: () => {
-        playing.value = true
-        tick()
-      },
-      onpause: () => {
-        playing.value = false
-        stopTicker()
-      },
-      onstop: () => {
-        playing.value = false
-        stopTicker()
-      },
+      onload: () => { duration.value = howl?.duration() ?? 0 },
+      onplay: () => { playing.value = true; tick() },
+      onpause: () => { playing.value = false; stopTicker() },
+      onstop: () => { playing.value = false; stopTicker() },
       onend: () => {
         playing.value = false
         stopTicker()
@@ -96,34 +82,39 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function play() {
-    if (!howl && current.value) {
-      load(current.value)
+    const cur = current.value
+    if (!howl && cur) {
+      load(cur)
     } else if (howl) {
       howl.play()
     }
   }
 
-  function pause() {
-    howl?.pause()
-  }
+  function pause() { howl?.pause() }
 
   function toggle() {
     playing.value ? pause() : play()
   }
 
   function next() {
-    if (index.value + 1 >= queue.value.length) {
+    const nextIndex = index.value + 1
+    if (nextIndex >= queue.value.length) {
       pause()
       return
     }
-    index.value += 1
-    load(queue.value[index.value])
+    const t = queue.value[nextIndex]
+    if (!t) return
+    index.value = nextIndex
+    load(t)
   }
 
   function prev() {
     if (index.value <= 0) return
-    index.value -= 1
-    load(queue.value[index.value])
+    const prevIndex = index.value - 1
+    const t = queue.value[prevIndex]
+    if (!t) return
+    index.value = prevIndex
+    load(t)
   }
 
   function seek(seconds: number) {
@@ -138,7 +129,6 @@ export const usePlayerStore = defineStore('player', () => {
     localStorage.setItem('resonance_volume', String(v))
   }
 
-  // Howler won't play without a user gesture on most browsers
   Howler.autoUnlock = true
   Howler.volume(volume.value)
 

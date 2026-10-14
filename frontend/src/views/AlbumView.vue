@@ -34,7 +34,8 @@ onMounted(async () => {
 })
 
 function playAll() {
-  if (tracks.value.length) player.playTrack(tracks.value[0], tracks.value)
+  const first = tracks.value[0]
+  if (first) player.playTrack(first, tracks.value)
 }
 </script>
 

@@ -5,24 +5,29 @@ import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useScanStore } from '@/stores/scan'
 import { useFavoritesStore } from '@/stores/favorites'
+import { usePlaylistsStore } from '@/stores/playlists'
 import { SUPPORTED_LOCALES } from '@/i18n'
+import { useKeyboard } from '@/composables/useKeyboard'
 import PlayerBar from '@/components/PlayerBar.vue'
 import ScanButton from '@/components/ScanButton.vue'
 import ScanProgress from '@/components/ScanProgress.vue'
-import { usePlaylistsStore } from '@/stores/playlists'
 import SearchBox from '@/components/SearchBox.vue'
+import ToastHost from '@/components/ToastHost.vue'
 
-const playlistsStore = usePlaylistsStore()
 const auth = useAuthStore()
 const router = useRouter()
 const localeStore = useLocaleStore()
 const scan = useScanStore()
 const favorites = useFavoritesStore()
+const playlistsStore = usePlaylistsStore()
+
+useKeyboard()
 
 onMounted(() => {
   if (auth.accessToken) {
     scan.connect()
     favorites.load()
+    playlistsStore.load()
   }
 })
 
@@ -98,5 +103,6 @@ async function logout() {
     </main>
 
     <PlayerBar v-if="auth.accessToken" />
+    <ToastHost />
   </div>
 </template>

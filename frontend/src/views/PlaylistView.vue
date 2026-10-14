@@ -34,7 +34,6 @@ onMounted(async () => {
     ]).then(([r]) => r)
     playlist.value = data.playlist
     tracks.value = data.tracks
-    editable.value = playlist.value?.user_id === undefined ? true : true
   } catch (e: any) {
     error.value = e.response?.data?.error ?? 'Failed to load playlist'
   } finally {
@@ -55,7 +54,8 @@ async function removeTrack(trackId: number) {
 }
 
 function playAll() {
-  if (tracks.value.length) player.playTrack(tracks.value[0], tracks.value)
+  const first = tracks.value[0]
+  if (first) player.playTrack(first, tracks.value)
 }
 </script>
 

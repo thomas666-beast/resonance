@@ -80,5 +80,10 @@
     "noneYet": "No playlists yet",
     "remove": "Remove from playlist",
     "confirmRemove": "Remove this track from the playlist?"
+  },
+  "toasts": {
+    "addedToPlaylist": "Added to {name}",
+    "createdAndAdded": "Created {name} and added track",
+    "genericError": "Something went wrong"
   }
 }
