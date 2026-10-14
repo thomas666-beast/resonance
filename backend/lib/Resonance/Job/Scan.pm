@@ -151,12 +151,12 @@ sub _process_file ($app, $file, $scan_path_id) {
         $app->pg->db->query(
             q{UPDATE tracks SET title = ?, album_id = ?, artist_id = ?,
               track_number = ?, disc_number = ?, duration_ms = ?,
-              bitrate = ?, samplerate = ?, channels = ?,
+              bitrate = ?, sample_rate = ?, channels = ?,
               mime_type = ?, updated_at = now()
               WHERE id = ?},
             $title, $album_id, $artist_id,
             $tags->{track_number}, $tags->{disc_number}, $info->{duration_ms},
-            $info->{bitrate}, $info->{samplerate}, $info->{channels},
+            $info->{bitrate}, $info->{sample_rate}, $info->{channels},
             $info->{codec}, $existing->{id},
         );
         $track_id = $existing->{id};
@@ -169,7 +169,7 @@ sub _process_file ($app, $file, $scan_path_id) {
               RETURNING id},
             $title, $album_id, $artist_id,
             $tags->{track_number}, $tags->{disc_number}, $info->{duration_ms},
-            $info->{bitrate}, $info->{samplerate}, $info->{channels},
+            $info->{bitrate}, $info->{sample_rate}, $info->{channels},
             $file, $info->{codec}, -s $file,
         )->hash->{id};
     }
