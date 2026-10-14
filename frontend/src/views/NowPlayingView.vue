@@ -52,7 +52,6 @@ async function toggleFavorite() {
 
 <template>
   <div v-if="current" class="relative min-h-screen overflow-hidden">
-    <!-- Ambient blurred background -->
     <div
       v-if="coverSrc"
       class="absolute inset-0 -z-10 opacity-30 dark:opacity-40"
@@ -66,8 +65,7 @@ async function toggleFavorite() {
     />
     <div class="absolute inset-0 -z-10 bg-app/60" />
 
-    <!-- Header -->
-    <header class="px-8 py-6 flex items-center">
+    <header class="px-8 py-6 flex items-center anim-fade-slide">
       <button
         @click="back"
         class="p-2 rounded-full hover-surface transition-colors text-muted"
@@ -83,10 +81,8 @@ async function toggleFavorite() {
       <p class="ml-auto text-label">{{ $t('nowPlaying.label') }}</p>
     </header>
 
-    <!-- Main content -->
     <main class="flex flex-col items-center px-8 pb-16 max-w-2xl mx-auto">
-      <!-- Album art -->
-      <div class="w-full max-w-md mt-4 mb-10">
+      <div class="w-full max-w-md mt-4 mb-10 anim-scale-fade">
         <AlbumCover
           v-if="current.album_id"
           :album-id="current.album_id"
@@ -102,8 +98,8 @@ async function toggleFavorite() {
         </div>
       </div>
 
-      <!-- Track info -->
-      <div class="w-full text-center mb-8">
+      <div class="w-full text-center mb-8 anim-fade-slide"
+           style="animation-delay: 80ms">
         <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-app truncate">
           {{ current.title }}
         </h1>
@@ -113,14 +109,13 @@ async function toggleFavorite() {
         </p>
       </div>
 
-      <!-- Seek bar -->
-      <div class="w-full mb-6">
+      <div class="w-full mb-6 anim-fade-slide" style="animation-delay: 160ms">
         <div
           @click="onSeekClick"
           class="group relative h-1.5 bg-surface-2 rounded-full cursor-pointer"
         >
           <div
-            class="absolute inset-y-0 left-0 bg-accent rounded-full transition-all"
+            class="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-150"
             :style="{ width: progress + '%' }"
           />
           <div
@@ -135,8 +130,7 @@ async function toggleFavorite() {
         </div>
       </div>
 
-      <!-- Controls -->
-      <div class="flex items-center gap-8">
+      <div class="flex items-center gap-8 anim-fade-slide" style="animation-delay: 240ms">
         <button
           @click="toggleFavorite"
           class="p-2 rounded-full hover-surface transition-colors"
@@ -194,7 +188,6 @@ async function toggleFavorite() {
     </main>
   </div>
 
-  <!-- Nothing playing -->
   <div v-else class="min-h-screen flex flex-col items-center justify-center text-center px-8">
     <div class="w-24 h-24 rounded-full bg-surface-2 flex items-center justify-center mb-6">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"

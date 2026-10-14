@@ -37,7 +37,7 @@ onMounted(async () => {
 
 <template>
   <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
-    <h1 class="text-3xl font-semibold tracking-tight mb-8">{{ $t('albums.title') }}</h1>
+    <h1 class="text-title mb-8">{{ $t('albums.title') }}</h1>
 
     <p v-if="error" class="text-danger">{{ error }}</p>
 
@@ -52,14 +52,15 @@ onMounted(async () => {
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       <RouterLink
-        v-for="a in albums"
+        v-for="(a, i) in albums"
         :key="a.id"
         :to="`/albums/${a.id}`"
-        class="group block"
+        class="group block anim-fade-slide"
+        :style="{ animationDelay: Math.min(i, 12) * 30 + 'ms' }"
       >
         <div class="aspect-square rounded-xl overflow-hidden shadow-lg
                     group-hover:shadow-xl group-hover:-translate-y-0.5
-                    transition-all">
+                    transition-all duration-200">
           <AlbumCover :album-id="a.id" fill />
         </div>
         <div class="mt-3">

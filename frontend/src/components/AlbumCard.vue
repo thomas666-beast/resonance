@@ -18,7 +18,8 @@ defineProps<{
     class="group w-40 shrink-0 block"
   >
     <div class="aspect-square rounded-xl overflow-hidden shadow-lg
-                group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all">
+                group-hover:shadow-xl group-hover:-translate-y-1
+                transition-all duration-200 ease-out">
       <AlbumCover :album-id="album.id" fill />
     </div>
     <div class="mt-3">

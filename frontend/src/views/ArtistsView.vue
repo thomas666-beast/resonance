@@ -33,7 +33,7 @@ watch(() => scan.lastResult, (r) => { if (r) load() })
 
 <template>
   <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
-    <h1 class="text-2xl font-bold mb-6">{{ $t('artists.title') }}</h1>
+    <h1 class="text-title mb-6">{{ $t('artists.title') }}</h1>
 
     <p v-if="error" class="text-danger">{{ error }}</p>
 
@@ -49,7 +49,12 @@ watch(() => scan.lastResult, (r) => { if (r) load() })
     />
 
     <ul v-else class="space-y-1">
-      <li v-for="a in artists" :key="a.id">
+      <li
+        v-for="(a, i) in artists"
+        :key="a.id"
+        class="anim-fade-slide"
+        :style="{ animationDelay: Math.min(i, 12) * 30 + 'ms' }"
+      >
         <RouterLink :to="`/artists/${a.id}`"
                     class="block px-3 py-2 rounded-lg hover-surface transition-colors">
           {{ a.name }}

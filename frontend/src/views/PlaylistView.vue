@@ -73,7 +73,7 @@ function playAll() {
     </div>
 
     <template v-else-if="playlist">
-      <header class="mb-10">
+      <header class="mb-10 anim-fade-slide">
         <p class="text-label mb-2">{{ $t('playlists.label') }}</p>
         <h1 class="text-display">{{ playlist.name }}</h1>
         <p v-if="playlist.description" class="text-muted mt-3">{{ playlist.description }}</p>
@@ -108,7 +108,8 @@ function playAll() {
         class="space-y-0.5"
       >
         <template #item="{ element: t, index: i }">
-          <div class="flex items-center">
+          <div class="flex items-center anim-fade-slide"
+               :style="{ animationDelay: Math.min(i, 12) * 25 + 'ms' }">
             <span class="drag-handle cursor-grab text-dim px-2 select-none">⋮⋮</span>
             <div class="flex-1">
               <TrackRow :track="t" :queue="tracks" :index="i + 1" show-artist>

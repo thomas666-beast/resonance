@@ -103,8 +103,12 @@ async function logout() {
 
     <ScanProgress v-if="!isNowPlaying" />
 
-    <main class="flex-1" :class="!isNowPlaying && 'pb-28'">
-      <RouterView />
+    <main class="flex-1 relative" :class="!isNowPlaying && 'pb-28'">
+      <RouterView v-slot="{ Component }">
+        <Transition name="page" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </Transition>
+      </RouterView>
     </main>
 
     <PlayerBar v-if="auth.accessToken && !isNowPlaying" />

@@ -27,7 +27,7 @@ onMounted(load)
 
 <template>
   <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
-    <h1 class="text-3xl font-semibold tracking-tight mb-8">{{ $t('favorites.title') }}</h1>
+    <h1 class="text-title mb-8">{{ $t('favorites.title') }}</h1>
 
     <SkeletonList v-if="loading" :count="8" />
 
@@ -41,14 +41,19 @@ onMounted(load)
     />
 
     <div v-else class="space-y-0.5">
-      <TrackRow
-        v-for="t in tracks"
+      <div
+        v-for="(t, i) in tracks"
         :key="t.id"
-        :track="t"
-        :queue="tracks"
-        show-artist
-        show-album
-      />
+        class="anim-fade-slide"
+        :style="{ animationDelay: Math.min(i, 12) * 25 + 'ms' }"
+      >
+        <TrackRow
+          :track="t"
+          :queue="tracks"
+          show-artist
+          show-album
+        />
+      </div>
     </div>
   </div>
 </template>

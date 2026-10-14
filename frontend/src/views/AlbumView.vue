@@ -56,7 +56,7 @@ function playAll() {
     </div>
 
     <template v-else-if="album">
-      <header class="mb-10 flex flex-col sm:flex-row gap-6">
+      <header class="mb-10 flex flex-col sm:flex-row gap-6 anim-fade-slide">
         <AlbumCover
           :album-id="album.id"
           :rounded="false"
@@ -85,13 +85,18 @@ function playAll() {
       </header>
 
       <div class="space-y-0.5">
-        <TrackRow
+        <div
           v-for="(t, i) in tracks"
           :key="t.id"
-          :track="t"
-          :queue="tracks"
-          :index="i + 1"
-        />
+          class="anim-fade-slide"
+          :style="{ animationDelay: Math.min(i, 12) * 25 + 'ms' }"
+        >
+          <TrackRow
+            :track="t"
+            :queue="tracks"
+            :index="i + 1"
+          />
+        </div>
       </div>
     </template>
   </div>
