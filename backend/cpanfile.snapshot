@@ -89,6 +89,167 @@ DISTRIBUTIONS
       overload 0
       strict 0
       warnings 0
+  Crypt-Argon2-0.032
+    pathname: L/LE/LEONT/Crypt-Argon2-0.032.tar.gz
+    provides:
+      Crypt::Argon2 0.032
+    requirements:
+      Dist::Build 0.028
+      Dist::Build::XS 0
+      Dist::Build::XS::Conf 0
+      Exporter 5.57
+      Time::HiRes 0
+      XSLoader 0
+      perl 5.006
+      strict 0
+      warnings 0
+  Crypt-JWT-0.038
+    pathname: M/MI/MIK/Crypt-JWT-0.038.tar.gz
+    provides:
+      Crypt::JWT 0.038
+      Crypt::KeyWrap 0.038
+    requirements:
+      Compress::Raw::Zlib 2.057
+      CryptX 0.067
+      Exporter 5.57
+      ExtUtils::MakeMaker 0
+      JSON 0
+      Scalar::Util 0
+      Test::More 0.88
+      perl 5.006
+  CryptX-0.091
+    pathname: M/MI/MIK/CryptX-0.091.tar.gz
+    provides:
+      Crypt::ASN1 0.091
+      Crypt::AuthEnc 0.091
+      Crypt::AuthEnc::CCM 0.091
+      Crypt::AuthEnc::ChaCha20Poly1305 0.091
+      Crypt::AuthEnc::EAX 0.091
+      Crypt::AuthEnc::GCM 0.091
+      Crypt::AuthEnc::GCMSIV 0.091
+      Crypt::AuthEnc::OCB 0.091
+      Crypt::AuthEnc::SIV 0.091
+      Crypt::AuthEnc::XChaCha20Poly1305 0.091
+      Crypt::Checksum 0.091
+      Crypt::Checksum::Adler32 0.091
+      Crypt::Checksum::CRC32 0.091
+      Crypt::Cipher 0.091
+      Crypt::Cipher::AES 0.091
+      Crypt::Cipher::ARIA 0.091
+      Crypt::Cipher::Anubis 0.091
+      Crypt::Cipher::Blowfish 0.091
+      Crypt::Cipher::CAST5 0.091
+      Crypt::Cipher::Camellia 0.091
+      Crypt::Cipher::DES 0.091
+      Crypt::Cipher::DES_EDE 0.091
+      Crypt::Cipher::IDEA 0.091
+      Crypt::Cipher::KASUMI 0.091
+      Crypt::Cipher::Khazad 0.091
+      Crypt::Cipher::MULTI2 0.091
+      Crypt::Cipher::Noekeon 0.091
+      Crypt::Cipher::RC2 0.091
+      Crypt::Cipher::RC5 0.091
+      Crypt::Cipher::RC6 0.091
+      Crypt::Cipher::SAFERP 0.091
+      Crypt::Cipher::SAFER_K128 0.091
+      Crypt::Cipher::SAFER_K64 0.091
+      Crypt::Cipher::SAFER_SK128 0.091
+      Crypt::Cipher::SAFER_SK64 0.091
+      Crypt::Cipher::SEED 0.091
+      Crypt::Cipher::SM4 0.091
+      Crypt::Cipher::Serpent 0.091
+      Crypt::Cipher::Skipjack 0.091
+      Crypt::Cipher::Twofish 0.091
+      Crypt::Cipher::XTEA 0.091
+      Crypt::Digest 0.091
+      Crypt::Digest::BLAKE2b_160 0.091
+      Crypt::Digest::BLAKE2b_256 0.091
+      Crypt::Digest::BLAKE2b_384 0.091
+      Crypt::Digest::BLAKE2b_512 0.091
+      Crypt::Digest::BLAKE2s_128 0.091
+      Crypt::Digest::BLAKE2s_160 0.091
+      Crypt::Digest::BLAKE2s_224 0.091
+      Crypt::Digest::BLAKE2s_256 0.091
+      Crypt::Digest::BLAKE3 0.091
+      Crypt::Digest::CHAES 0.091
+      Crypt::Digest::KangarooTwelve 0.091
+      Crypt::Digest::Keccak224 0.091
+      Crypt::Digest::Keccak256 0.091
+      Crypt::Digest::Keccak384 0.091
+      Crypt::Digest::Keccak512 0.091
+      Crypt::Digest::MD2 0.091
+      Crypt::Digest::MD4 0.091
+      Crypt::Digest::MD5 0.091
+      Crypt::Digest::RIPEMD128 0.091
+      Crypt::Digest::RIPEMD160 0.091
+      Crypt::Digest::RIPEMD256 0.091
+      Crypt::Digest::RIPEMD320 0.091
+      Crypt::Digest::SHA1 0.091
+      Crypt::Digest::SHA224 0.091
+      Crypt::Digest::SHA256 0.091
+      Crypt::Digest::SHA384 0.091
+      Crypt::Digest::SHA3_224 0.091
+      Crypt::Digest::SHA3_256 0.091
+      Crypt::Digest::SHA3_384 0.091
+      Crypt::Digest::SHA3_512 0.091
+      Crypt::Digest::SHA512 0.091
+      Crypt::Digest::SHA512_224 0.091
+      Crypt::Digest::SHA512_256 0.091
+      Crypt::Digest::SHAKE 0.091
+      Crypt::Digest::SM3 0.091
+      Crypt::Digest::Tiger192 0.091
+      Crypt::Digest::TurboSHAKE 0.091
+      Crypt::Digest::Whirlpool 0.091
+      Crypt::KeyDerivation 0.091
+      Crypt::Mac 0.091
+      Crypt::Mac::BLAKE2b 0.091
+      Crypt::Mac::BLAKE2s 0.091
+      Crypt::Mac::F9 0.091
+      Crypt::Mac::HMAC 0.091
+      Crypt::Mac::KMAC 0.091
+      Crypt::Mac::OMAC 0.091
+      Crypt::Mac::PMAC 0.091
+      Crypt::Mac::Pelican 0.091
+      Crypt::Mac::Poly1305 0.091
+      Crypt::Mac::XCBC 0.091
+      Crypt::Misc 0.091
+      Crypt::Mode 0.091
+      Crypt::Mode::CBC 0.091
+      Crypt::Mode::CFB 0.091
+      Crypt::Mode::CTR 0.091
+      Crypt::Mode::ECB 0.091
+      Crypt::Mode::OFB 0.091
+      Crypt::Mode::XTS 0.091
+      Crypt::PK 0.091
+      Crypt::PK::DH 0.091
+      Crypt::PK::DSA 0.091
+      Crypt::PK::ECC 0.091
+      Crypt::PK::Ed25519 0.091
+      Crypt::PK::Ed448 0.091
+      Crypt::PK::RSA 0.091
+      Crypt::PK::X25519 0.091
+      Crypt::PK::X448 0.091
+      Crypt::PRNG 0.091
+      Crypt::PRNG::ChaCha20 0.091
+      Crypt::PRNG::Fortuna 0.091
+      Crypt::PRNG::RC4 0.091
+      Crypt::PRNG::Sober128 0.091
+      Crypt::PRNG::Yarrow 0.091
+      Crypt::Stream::ChaCha 0.091
+      Crypt::Stream::RC4 0.091
+      Crypt::Stream::Rabbit 0.091
+      Crypt::Stream::Salsa20 0.091
+      Crypt::Stream::Sober128 0.091
+      Crypt::Stream::Sosemanuk 0.091
+      Crypt::Stream::XChaCha 0.091
+      Crypt::Stream::XSalsa20 0.091
+      CryptX 0.091
+      Math::BigInt::LTM 0.091
+    requirements:
+      ExtUtils::MakeMaker 0
+      Math::BigInt 0
+      Time::HiRes 0
+      perl 5.006
   DBD-Pg-3.21.2
     pathname: T/TU/TURNSTEP/DBD-Pg-3.21.2.tar.gz
     provides:
@@ -176,6 +337,32 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       Test::More 0
       perl 5.004
+  Dist-Build-0.028
+    pathname: L/LE/LEONT/Dist-Build-0.028.tar.gz
+    provides:
+      Dist::Build 0.028
+      Dist::Build::Core 0.028
+      Dist::Build::Serializer 0.028
+      Dist::Build::ShareDir 0.028
+      Dist::Build::Util 0.028
+      Dist::Build::XS 0.028
+      Dist::Build::XS::Alien 0.028
+      Dist::Build::XS::Conf 0.028
+      Dist::Build::XS::Export 0.028
+      Dist::Build::XS::Import 0.028
+      Dist::Build::XS::WriteConstants 0.028
+    requirements:
+      CPAN::Meta 2.142060
+      ExtUtils::Builder 0.020
+      ExtUtils::Builder::Compiler 0.036
+      ExtUtils::Config 0
+      ExtUtils::Helpers 0.028
+      ExtUtils::InstallPaths 0
+      Getopt::Long 2.36
+      List::Util 1.33
+      TAP::Harness 3.29
+      parent 0
+      perl 5.010
   Dotenv-0.002
     pathname: B/BO/BOOK/Dotenv-0.002.tar.gz
     provides:
@@ -206,6 +393,70 @@ DISTRIBUTIONS
       perl 5.008001
       strict 0
       warnings 0
+  ExtUtils-Builder-0.020
+    pathname: L/LE/LEONT/ExtUtils-Builder-0.020.tar.gz
+    provides:
+      ExtUtils::Builder 0.020
+      ExtUtils::Builder::Action 0.020
+      ExtUtils::Builder::Action::Code 0.020
+      ExtUtils::Builder::Action::Command 0.020
+      ExtUtils::Builder::Action::Composite 0.020
+      ExtUtils::Builder::Action::Function 0.020
+      ExtUtils::Builder::Action::Perl 0.020
+      ExtUtils::Builder::Action::Primitive 0.020
+      ExtUtils::Builder::CPAN::Tool 0.020
+      ExtUtils::Builder::FileSet 0.020
+      ExtUtils::Builder::FileSet::Filter 0.020
+      ExtUtils::Builder::FileSet::Free 0.020
+      ExtUtils::Builder::FileSet::Subst 0.020
+      ExtUtils::Builder::MakeMaker 0.020
+      ExtUtils::Builder::Node 0.020
+      ExtUtils::Builder::Plan 0.020
+      ExtUtils::Builder::Planner 0.020
+      ExtUtils::Builder::Planner::Extension 0.020
+      ExtUtils::Builder::Serializer 0.020
+      ExtUtils::Builder::Util 0.020
+    requirements:
+      CPAN::Meta 0
+      ExtUtils::Config 0.009
+      ExtUtils::Helpers 0.027
+      ExtUtils::MakeMaker 6.68
+      List::Util 1.45
+      Perl::OSType 0
+      parent 0
+      perl 5.010
+  ExtUtils-Builder-Compiler-0.037
+    pathname: L/LE/LEONT/ExtUtils-Builder-Compiler-0.037.tar.gz
+    provides:
+      ExtUtils::Builder::ArgumentCollector 0.037
+      ExtUtils::Builder::AutoDetect::C 0.037
+      ExtUtils::Builder::Binary 0.037
+      ExtUtils::Builder::BuildTools::Base 0.037
+      ExtUtils::Builder::BuildTools::FromPerl 0.037
+      ExtUtils::Builder::Compiler 0.037
+      ExtUtils::Builder::Compiler::MSVC 0.037
+      ExtUtils::Builder::Compiler::Unixy 0.037
+      ExtUtils::Builder::Compiler::VMS 0.037
+      ExtUtils::Builder::Conf 0.037
+      ExtUtils::Builder::Linker 0.037
+      ExtUtils::Builder::Linker::Ar 0.037
+      ExtUtils::Builder::Linker::COFF 0.037
+      ExtUtils::Builder::Linker::ELF::Any 0.037
+      ExtUtils::Builder::Linker::ELF::GCC 0.037
+      ExtUtils::Builder::Linker::Mach::GCC 0.037
+      ExtUtils::Builder::Linker::PE::GCC 0.037
+      ExtUtils::Builder::Linker::PE::MSVC 0.037
+      ExtUtils::Builder::Linker::Unixy 0.037
+      ExtUtils::Builder::Linker::XCOFF 0.037
+      ExtUtils::Builder::ParseXS 0.037
+      ExtUtils::Builder::Profile::Perl 0.037
+    requirements:
+      ExtUtils::Builder 0.018
+      ExtUtils::Config 0.007
+      ExtUtils::MakeMaker 0
+      Perl::OSType 0
+      parent 0
+      perl 5.010
   ExtUtils-Config-0.010
     pathname: L/LE/LEONT/ExtUtils-Config-0.010.tar.gz
     provides:
@@ -289,6 +540,15 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 6.64
       Scalar::Util 0
       perl 5.008001
+  JSON-4.11
+    pathname: I/IS/ISHIGAKI/JSON-4.11.tar.gz
+    provides:
+      JSON 4.11
+      JSON::Backend::PP 4.11
+    requirements:
+      ExtUtils::MakeMaker 0
+      Scalar::Util 1.08
+      Test::More 0.88
   JSON-MaybeXS-1.004008
     pathname: E/ET/ETHER/JSON-MaybeXS-1.004008.tar.gz
     provides:
