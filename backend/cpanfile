@@ -34,3 +34,5 @@ requires 'Crypt::JWT';
 requires 'Audio::Scan';
 requires 'Minion';
 requires 'File::Find::Rule';
+
+requires 'Mojolicious::Plugin::SecurityHeader';

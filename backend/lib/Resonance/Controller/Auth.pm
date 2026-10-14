@@ -8,6 +8,20 @@ use Resonance::Auth qw(
 
 # ── helpers ──────────────────────────────────────────────
 
+sub _set_refresh_cookie ($c, $refresh_token, $ttl) {
+    my $cookie = $c->cookie(
+        resonance_refresh => $refresh_token,
+        {
+            expires  => time + $ttl,
+            path     => '/api/auth',
+            httponly => 1,
+            secure   => $c->config->{env} eq 'production' ? 1 : 0,
+            samesite => 'Strict',
+        },
+    );
+    $c->res->cookies($cookie);
+}
+
 sub _issue_tokens ($c, $user_id) {
     my $jwt = $c->config->{jwt};
 
@@ -17,6 +31,7 @@ sub _issue_tokens ($c, $user_id) {
     my $access  = issue_access_token($jwt->{secret}, $user_id, $access_ttl);
     my $refresh = generate_refresh_token();
 
+    # Store hashed refresh token in DB
     $c->pg->db->query(
         q{INSERT INTO refresh_tokens
               (user_id, token_hash, expires_at, user_agent, ip_address)
@@ -28,7 +43,10 @@ sub _issue_tokens ($c, $user_id) {
         $c->tx->remote_address,
     );
 
-    return ($access, $refresh, $access_ttl);
+    # Set refresh token as HttpOnly cookie
+    _set_refresh_cookie($c, $refresh, $refresh_ttl);
+
+    return ($access, $access_ttl);
 }
 
 # ── endpoints ────────────────────────────────────────────
@@ -58,15 +76,14 @@ sub register ($c) {
     return $c->render(status => 409, json => { error => 'username_taken' })
         unless $row;
 
-    my ($access, $refresh, $ttl) = _issue_tokens($c, $row->{id});
+    my ($access, $ttl) = _issue_tokens($c, $row->{id});
 
     $c->render(json => {
-        user          => { id => 0 + $row->{id}, username => $row->{username} },
-        access_token  => $access,
-        refresh_token => $refresh,
-        expires_in    => $ttl,
+        user         => { id => 0 + $row->{id}, username => $row->{username} },
+        access_token => $access,
+        expires_in   => $ttl,
     });
-}
+    }
 
 sub login ($c) {
     my $body = $c->req->json // {};
@@ -89,25 +106,22 @@ sub login ($c) {
     return $c->render(status => 401, json => { error => 'invalid_credentials' })
         unless $user && $ok && $user->{is_active};
 
-    my ($access, $refresh, $ttl) = _issue_tokens($c, $user->{id});
+    my ($access, $ttl) = _issue_tokens($c, $user->{id});
 
     $c->render(json => {
-        user          => { id => 0 + $user->{id}, username => $user->{username} },
-        access_token  => $access,
-        refresh_token => $refresh,
-        expires_in    => $ttl,
+        user         => { id => 0 + $user->{id}, username => $user->{username} },
+        access_token => $access,
+        expires_in   => $ttl,
     });
 }
 
 sub refresh ($c) {
-    my $body = $c->req->json // {};
-    my $rt = $body->{refresh_token};
-    return $c->render(status => 400, json => { error => 'missing_refresh_token' })
+    my $rt = $c->cookie('resonance_refresh');
+    return $c->render(status => 401, json => { error => 'missing_refresh_token' })
         unless defined $rt && length $rt;
 
     my $hash = hash_token($rt);
 
-    # Atomically: lock the row, revoke it, hand back the user_id
     my $row = eval {
         my $db  = $c->pg->db;
         my $tok = $db->query(
@@ -129,18 +143,16 @@ sub refresh ($c) {
     return $c->render(status => 401, json => { error => 'invalid_refresh_token' })
         unless $row;
 
-    my ($access, $new_refresh, $ttl) = _issue_tokens($c, $row->{user_id});
+    my ($access, $ttl) = _issue_tokens($c, $row->{user_id});
 
     $c->render(json => {
-        access_token  => $access,
-        refresh_token => $new_refresh,
-        expires_in    => $ttl,
+        access_token => $access,
+        expires_in   => $ttl,
     });
 }
 
 sub logout ($c) {
-    my $body = $c->req->json // {};
-    my $rt = $body->{refresh_token};
+    my $rt = $c->cookie('resonance_refresh');
 
     if (defined $rt && length $rt) {
         $c->pg->db->query(
@@ -156,6 +168,20 @@ sub logout ($c) {
             $c->stash('current_user_id'),
         );
     }
+
+    # Clear cookie
+    $c->res->cookies(
+        $c->cookie(
+            resonance_refresh => '',
+            {
+                expires  => 1,
+                path     => '/api/auth',
+                httponly => 1,
+                secure   => $c->config->{env} eq 'production' ? 1 : 0,
+                samesite => 'Strict',
+            },
+        )
+    );
 
     $c->render(json => { ok => \1 });
 }

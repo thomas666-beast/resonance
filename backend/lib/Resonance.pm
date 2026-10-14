@@ -48,6 +48,8 @@ sub startup ($self) {
         },
     });
 
+    $self->config->{env} = $ENV{RESONANCE_ENV} // 'development';
+
     $self->config->{allow_registration} =
         ($ENV{ALLOW_REGISTRATION} // '0') eq '1' ? 1 : 0;
     $self->config->{media_root} = $ENV{MEDIA_ROOT};
@@ -71,6 +73,8 @@ sub startup ($self) {
 
     require Resonance::Job::Scan;
     Resonance::Job::Scan::register($self->minion);
+
+    $self->plugin('SecurityHeader');
 
     # Routes
     my $r   = $self->routes;
