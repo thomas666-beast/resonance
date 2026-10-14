@@ -6,6 +6,8 @@ import { usePlayerStore, type Track } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import TrackRow from '@/components/TrackRow.vue'
 import AlbumCover from '@/components/AlbumCover.vue'
+import Skeleton from '@/components/Skeleton.vue'
+import SkeletonList from '@/components/SkeletonList.vue'
 
 const route = useRoute()
 const player = usePlayerStore()
@@ -39,8 +41,19 @@ function playAll() {
 
 <template>
   <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
-    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
-    <p v-else-if="error" class="text-danger">{{ error }}</p>
+    <p v-if="error" class="text-danger">{{ error }}</p>
+
+    <div v-else-if="loading" class="space-y-6">
+      <div class="flex flex-col sm:flex-row gap-6">
+        <Skeleton variant="block" width="12rem" height="12rem" />
+        <div class="flex-1 space-y-3 flex flex-col justify-end">
+          <Skeleton variant="text" width="30%" height="0.75rem" />
+          <Skeleton variant="text" width="60%" height="2.5rem" />
+          <Skeleton variant="text" width="40%" height="1rem" />
+        </div>
+      </div>
+      <SkeletonList :count="8" />
+    </div>
 
     <template v-else-if="album">
       <header class="mb-8 flex flex-col sm:flex-row gap-6">

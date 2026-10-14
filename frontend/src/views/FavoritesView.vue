@@ -4,6 +4,8 @@ import api from '@/api/client'
 import { useFavoritesStore } from '@/stores/favorites'
 import { type Track } from '@/stores/player'
 import TrackRow from '@/components/TrackRow.vue'
+import SkeletonList from '@/components/SkeletonList.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const favorites = useFavoritesStore()
 
@@ -27,8 +29,16 @@ onMounted(load)
   <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
     <h1 class="text-3xl font-semibold tracking-tight mb-8">{{ $t('favorites.title') }}</h1>
 
-    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
-    <p v-else-if="!tracks.length" class="text-muted">{{ $t('favorites.empty') }}</p>
+    <SkeletonList v-if="loading" :count="8" />
+
+    <EmptyState
+      v-else-if="!tracks.length"
+      icon="heart"
+      :title="$t('favorites.emptyTitle')"
+      :description="$t('favorites.emptyDescription')"
+      :action-label="$t('nav.albums')"
+      action-to="/albums"
+    />
 
     <div v-else class="space-y-0.5">
       <TrackRow

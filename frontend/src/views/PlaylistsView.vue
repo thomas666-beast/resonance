@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePlaylistsStore } from '@/stores/playlists'
+import EmptyState from '@/components/EmptyState.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -38,9 +39,12 @@ async function createNew() {
       </button>
     </header>
 
-    <p v-if="!playlists.items.length" class="text-muted">
-      {{ $t('playlists.empty') }}
-    </p>
+    <EmptyState
+      v-if="!playlists.items.length"
+      icon="list"
+      :title="$t('playlists.emptyTitle')"
+      :description="$t('playlists.emptyDescription')"
+    />
 
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <RouterLink

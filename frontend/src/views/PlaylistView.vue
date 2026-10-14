@@ -8,6 +8,8 @@ import { usePlaylistsStore, type Playlist } from '@/stores/playlists'
 import { usePlayerStore, type Track } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import TrackRow from '@/components/TrackRow.vue'
+import SkeletonList from '@/components/SkeletonList.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -58,8 +60,16 @@ function playAll() {
 
 <template>
   <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
-    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
-    <p v-else-if="error" class="text-danger">{{ error }}</p>
+    <p v-if="error" class="text-danger">{{ error }}</p>
+
+    <div v-else-if="loading" class="space-y-6">
+      <div class="space-y-3">
+        <Skeleton variant="text" width="20%" height="0.75rem" />
+        <Skeleton variant="text" width="50%" height="2.5rem" />
+        <Skeleton variant="text" width="25%" height="1rem" />
+      </div>
+      <SkeletonList :count="8" />
+    </div>
 
     <template v-else-if="playlist">
       <header class="mb-8">
@@ -80,7 +90,14 @@ function playAll() {
         </button>
       </header>
 
-      <p v-if="!tracks.length" class="text-muted">{{ $t('playlists.noTracks') }}</p>
+      <EmptyState
+        v-if="!tracks.length"
+        icon="list"
+        :title="$t('playlists.noTracksTitle')"
+        :description="$t('playlists.noTracksDescription')"
+        :action-label="$t('nav.albums')"
+        action-to="/albums"
+      />
 
       <VueDraggable
         v-else

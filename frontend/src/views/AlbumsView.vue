@@ -4,6 +4,8 @@ import { RouterLink } from 'vue-router'
 import api from '@/api/client'
 import { useI18n } from 'vue-i18n'
 import AlbumCover from '@/components/AlbumCover.vue'
+import SkeletonGrid from '@/components/SkeletonGrid.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const { t } = useI18n()
 
@@ -37,9 +39,16 @@ onMounted(async () => {
   <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
     <h1 class="text-3xl font-semibold tracking-tight mb-8">{{ $t('albums.title') }}</h1>
 
-    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
-    <p v-else-if="error" class="text-danger">{{ error }}</p>
-    <p v-else-if="!albums.length" class="text-muted">{{ $t('albums.empty') }}</p>
+    <p v-if="error" class="text-danger">{{ error }}</p>
+
+    <SkeletonGrid v-else-if="loading" :count="12" />
+
+    <EmptyState
+      v-else-if="!albums.length"
+      icon="album"
+      :title="$t('albums.emptyTitle')"
+      :description="$t('albums.emptyDescription')"
+    />
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       <RouterLink

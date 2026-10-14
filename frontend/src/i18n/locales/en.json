@@ -44,34 +44,36 @@
     "tracks": "Tracks",
     "noResults": "No results"
   },
+  "albums": {
+    "title": "Albums",
+    "label": "Album",
+    "empty": "No albums yet.",
+    "emptyTitle": "Your library is empty",
+    "emptyDescription": "Scan your music folder to get started."
+  },
   "artists": {
     "title": "Artists",
-    "loading": "Loading…",
-    "empty": "No artists yet. Trigger a scan from the backend.",
+    "empty": "No artists yet.",
+    "emptyTitle": "No artists yet",
+    "emptyDescription": "Scan your library to discover the artists in your collection.",
     "loadFailed": "Failed to load artists",
     "browse": "Browse artists"
   },
-  "album": {
-    "label": "Album",
-    "trackCount": "{n} tracks",
-    "playAll": "Play all",
-    "title": "Albums",
-    "empty": "No albums yet. Scan your library to get started."
-  },
   "favorites": {
     "title": "Favorites",
-    "empty": "No favorites yet. Tap the heart on any track."
-  },
-  "scan": {
-    "start": "Scan library",
-    "running": "Scanning…",
-    "done": "Scan complete: {inserted} added, {updated} updated, {failed} failed"
+    "empty": "No favorites yet.",
+    "emptyTitle": "No favorites yet",
+    "emptyDescription": "Tap the heart on any track and it will show up here."
   },
   "playlists": {
     "title": "Playlists",
     "label": "Playlist",
-    "empty": "No playlists yet. Create one to get started.",
-    "noTracks": "This playlist is empty. Add tracks from any album.",
+    "empty": "No playlists yet.",
+    "emptyTitle": "No playlists yet",
+    "emptyDescription": "Create your first playlist and add tracks from any album.",
+    "noTracks": "This playlist is empty.",
+    "noTracksTitle": "Empty playlist",
+    "noTracksDescription": "Add tracks from any album to build this playlist.",
     "newPlaylist": "New playlist",
     "newNamePrompt": "Playlist name",
     "trackCount": "{n} tracks",
