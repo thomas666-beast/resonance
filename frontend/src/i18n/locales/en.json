@@ -1,0 +1,32 @@
+{
+  "app": {
+    "title": "Resonance",
+    "welcome": "Welcome back, {name}"
+  },
+  "nav": {
+    "artists": "Artists",
+    "albums": "Albums",
+    "logout": "Logout"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signInTo": "Sign in to Resonance",
+    "register": "Create your account",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "emailOptional": "Email (optional)",
+    "confirmPassword": "Confirm password",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "signingIn": "Signing in…",
+    "creating": "Creating…",
+    "createAccount": "Create account"
+  },
+  "artists": {
+    "title": "Artists",
+    "loading": "Loading…",
+    "empty": "No artists yet. Trigger a scan from the backend.",
+    "loadFailed": "Failed to load artists"
+  }
+}
