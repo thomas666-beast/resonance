@@ -11,26 +11,24 @@ const router = createRouter({
   ],
 })
 
-// Track whether we've already attempted a silent refresh this page-load.
-// Without this, a failed refresh navigates to /login, which re-triggers
-// the guard, which calls refresh again — infinite loop.
-let bootstrapAttempted = false
-
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // Public routes: never touch the guard's refresh logic here.
-  if (to.name === 'login' || to.name === 'register') {
-    return true
+  // CRITICAL: before any decision, make sure the session has been
+  // restored at least once this page-load. init() is idempotent.
+  if (!auth.initialized) {
+    await auth.init()
   }
 
+  // Now accessToken reflects reality.
+
+  // Logged in → keep out of login/register
+  if ((to.name === 'login' || to.name === 'register') && auth.accessToken) {
+    return { name: 'home' }
+  }
+
+  // Not logged in → keep out of protected routes
   if (to.meta.requiresAuth && !auth.accessToken) {
-    // Only attempt silent refresh once per page load.
-    if (!bootstrapAttempted) {
-      bootstrapAttempted = true
-      const ok = await auth.refresh()
-      if (ok) return true
-    }
     return { name: 'login' }
   }
 
