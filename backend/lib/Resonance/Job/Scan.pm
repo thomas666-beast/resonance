@@ -4,6 +4,8 @@ use Mojo::Base -strict, -signatures;
 use File::Find::Rule;
 use Audio::Scan;
 use Resonance::Scan::Normalizer qw(normalize_tags normalize_info);
+use Mojo::File qw(path);
+use Digest::SHA qw/sha256_hex/;
 
 # Our v1 supported extensions
 my @EXTENSIONS = qw(*.flac *.mp3 *.m4a *.ogg *.opus);
@@ -141,6 +143,11 @@ sub _process_file ($app, $file, $scan_path_id) {
         }
     }
 
+    if ($album_id) {
+        eval { _ensure_album_cover($app, $album_id, $raw, $file) };
+        # silently ignore cover errors — a scan shouldn't fail over art
+    }
+
     # Upsert track
     my $existing = $app->pg->db->query(
         'SELECT id FROM tracks WHERE path = ?', $file,
@@ -182,6 +189,95 @@ sub _basename_no_ext ($file) {
     $base =~ s{.*/}{};
     $base =~ s{\.[^.]+$}{};
     return $base;
+}
+
+# ── cover extraction ─────────────────────────────────────
+
+sub _cover_cache_dir ($app) {
+    my $dir = $app->config->{cover_cache_dir} // 'data/covers';
+    path($dir)->make_path unless -d $dir;
+    return $dir;
+}
+
+sub _extract_embedded_cover ($raw) {
+    # ID3v2 (MP3, AIFF, WAV) — APIC is a 4-element array:
+    #   [ mime_type, picture_type, description, binary_data ]
+    # Confirmed on the test library: [3] is the JPEG bytes.
+    if (my $apic = $raw->{tags}{APIC}) {
+        my $arr = ref $apic eq 'ARRAY' ? $apic : [$apic];
+        # Standard ID3v2.4 shape
+        if (@$arr >= 4 && defined $arr->[3] && !ref $arr->[3]) {
+            return $arr->[3];
+        }
+        # Older/alternate shape: hashref with 'data'
+        for my $entry (@$arr) {
+            if (ref $entry eq 'HASH' && defined $entry->{data}) {
+                return $entry->{data};
+            }
+        }
+    }
+
+    # FLAC/Ogg/Opus — PICTURE in info block
+    if (my $pic = $raw->{info}{PICTURE}) {
+        my $arr = ref $pic eq 'ARRAY' ? $pic : [$pic];
+        for my $entry (@$arr) {
+            if (ref $entry eq 'HASH' && defined $entry->{data}) {
+                return $entry->{data};
+            }
+            return $entry if !ref $entry;
+        }
+    }
+
+    # MP4/M4A — COVR is plain binary data
+    if (my $covr = $raw->{tags}{COVR}) {
+        my $data = ref $covr eq 'ARRAY' ? $covr->[0] : $covr;
+        return $data if defined $data && !ref $data;
+    }
+
+    return undef;
+}
+
+sub _find_folder_cover ($file) {
+    my $dir = path($file)->dirname;
+    for my $name (qw/cover.jpg cover.jpeg cover.png folder.jpg folder.png front.jpg front.png/) {
+        my $candidate = $dir->child($name);
+        return $candidate->to_string if -f $candidate;
+    }
+    return undef;
+}
+
+sub _ensure_album_cover ($app, $album_id, $raw, $file) {
+    # Already cached?
+    my $existing = $app->pg->db->query(
+        'SELECT cover_path FROM albums WHERE id = ?', $album_id,
+    )->hash->{cover_path};
+    return if defined $existing && length $existing;
+
+    my $dir = _cover_cache_dir($app);
+
+    # Try embedded first
+    my $bytes = eval { _extract_embedded_cover($raw) };
+    if (defined $bytes && length $bytes) {
+        my $out = "$dir/$album_id.jpg";
+        path($out)->spurt($bytes);
+        $app->pg->db->query(
+            'UPDATE albums SET cover_path = ?, updated_at = now() WHERE id = ?',
+            $out, $album_id,
+        );
+        return;
+    }
+
+    # Fall back to folder image
+    my $src = _find_folder_cover($file);
+    if ($src) {
+        my $out = "$dir/$album_id.jpg";
+        path($src)->copy_to($out);
+        $app->pg->db->query(
+            'UPDATE albums SET cover_path = ?, updated_at = now() WHERE id = ?',
+            $out, $album_id,
+        );
+        return;
+    }
 }
 
 1;

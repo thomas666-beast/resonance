@@ -53,6 +53,7 @@ sub startup ($self) {
     $self->config->{allow_registration} =
         ($ENV{ALLOW_REGISTRATION} // '0') eq '1' ? 1 : 0;
     $self->config->{media_root} = $ENV{MEDIA_ROOT};
+    $self->config->{cover_cache_dir} = $ENV{COVER_CACHE_DIR} // 'data/covers';
 
     $self->log->level($self->config->{log_level});
 
@@ -121,6 +122,8 @@ sub startup ($self) {
     $authed->patch ('/playlists/:id/reorder')                ->to('Playlists#reorder');
 
     $authed->get('/search')->to('Search#search');
+
+    $authed->get('/cover/:album_id')->to('Cover#show');
 }
 
 1;

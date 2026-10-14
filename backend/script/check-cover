@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+use Audio::Scan;
+use Data::Dumper;
+
+my $file = shift @ARGV or die "Usage: $0 <file>\n";
+my $raw = Audio::Scan->scan($file);
+
+print "Top-level keys: ", join(", ", sort keys %$raw), "\n\n";
+
+if (my $apic = $raw->{tags}{APIC}) {
+    print "APIC shape: ", ref($apic), "\n";
+    if (ref $apic eq 'ARRAY') {
+        print "  Array length: ", scalar(@$apic), "\n";
+        for my $i (0 .. $#$apic) {
+            my $v = $apic->[$i];
+            if (!defined $v) {
+                print "  [$i] undef\n";
+            } elsif (ref $v) {
+                print "  [$i] ", ref($v), "\n";
+            } elsif (length($v) > 100) {
+                print "  [$i] (binary, ", length($v), " bytes)\n";
+            } else {
+                print "  [$i] '$v'\n";
+            }
+        }
+    }
+}
+elsif (my $covr = $raw->{tags}{COVR}) {
+    print "COVR: ", (ref $covr || 'string'), " length=", length($covr), "\n";
+}
+else {
+    print "No embedded cover found in tags.\n";
+    print "Available tag keys: ", join(", ", sort keys %{$raw->{tags}}), "\n";
+}

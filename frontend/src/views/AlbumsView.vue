@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api/client'
 import { useI18n } from 'vue-i18n'
+import AlbumCover from '@/components/AlbumCover.vue'
 
 const { t } = useI18n()
 
@@ -47,14 +48,10 @@ onMounted(async () => {
         :to="`/albums/${a.id}`"
         class="group block"
       >
-        <div class="aspect-square bg-stone-100 rounded-xl overflow-hidden
-                    shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5
-                    transition-all flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-12 h-12 stroke-stone-300 fill-none" stroke-width="1.5">
-            <circle cx="12" cy="12" r="9" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
+        <div class="aspect-square rounded-xl overflow-hidden shadow-sm
+                    group-hover:shadow-md group-hover:-translate-y-0.5
+                    transition-all">
+          <AlbumCover :album-id="a.id" fill />
         </div>
         <div class="mt-3">
           <div class="text-sm font-medium truncate">{{ a.title }}</div>

@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { usePlayerStore, type Track } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import TrackRow from '@/components/TrackRow.vue'
+import AlbumCover from '@/components/AlbumCover.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -43,26 +44,32 @@ function playAll() {
     <p v-else-if="error" class="text-red-600">{{ error }}</p>
 
     <template v-else-if="album">
-      <header class="mb-8">
-        <p class="text-xs uppercase tracking-widest text-stone-400 mb-2">
-          {{ $t('album.label') }}
-        </p>
-        <h1 class="text-4xl font-semibold tracking-tight">{{ album.title }}</h1>
-        <p class="text-stone-600 mt-2">
-          <RouterLink v-if="album.artist_id" :to="`/artists/${album.artist_id}`"
-                      class="hover:underline">{{ album.artist_name }}</RouterLink>
-          <span v-if="album.year"> · {{ album.year }}</span>
-          <span v-if="tracks.length"> · {{ $t('album.trackCount', { n: tracks.length }) }}</span>
-        </p>
-
-        <button
-          @click="playAll"
-          :disabled="!tracks.length"
-          class="mt-6 px-5 py-2.5 bg-stone-900 text-white rounded-full text-sm font-medium
-                 hover:bg-stone-800 disabled:opacity-40 transition-colors"
-        >
-          ▶ {{ $t('album.playAll') }}
-        </button>
+      <header class="mb-8 flex flex-col sm:flex-row gap-6">
+        <AlbumCover
+          :album-id="album.id"
+          :rounded="false"
+          class="!w-48 !h-48 !rounded-xl shadow-md"
+        />
+        <div class="flex flex-col justify-end">
+          <p class="text-xs uppercase tracking-widest text-stone-400 mb-2">
+            {{ $t('album.label') }}
+          </p>
+          <h1 class="text-4xl font-semibold tracking-tight">{{ album.title }}</h1>
+          <p class="text-stone-600 mt-2">
+            <RouterLink v-if="album.artist_id" :to="`/artists/${album.artist_id}`"
+                        class="hover:underline">{{ album.artist_name }}</RouterLink>
+            <span v-if="album.year"> · {{ album.year }}</span>
+            <span v-if="tracks.length"> · {{ $t('album.trackCount', { n: tracks.length }) }}</span>
+          </p>
+          <button
+            @click="playAll"
+            :disabled="!tracks.length"
+            class="mt-6 self-start px-5 py-2.5 bg-stone-900 text-white rounded-full text-sm
+                   font-medium hover:bg-stone-800 disabled:opacity-40 transition-colors"
+          >
+            ▶ {{ $t('album.playAll') }}
+          </button>
+        </div>
       </header>
 
       <div class="space-y-0.5">
