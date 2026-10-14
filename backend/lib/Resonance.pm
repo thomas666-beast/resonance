@@ -67,6 +67,7 @@ sub startup ($self) {
     # Plugins
     $self->plugin('Resonance::Plugin::Auth');
     $self->plugin('Minion' => { Pg => $self->config->{pg}{dsn} });
+    $self->minion->backend->pg->migrations->name('minion')->migrate;
 
     require Resonance::Job::Scan;
     Resonance::Job::Scan::register($self->minion);
@@ -86,7 +87,18 @@ sub startup ($self) {
     $authed->get   ('/auth/tokens')     ->to('Me#list_tokens');
     $authed->post  ('/auth/tokens')     ->to('Me#create_token');
     $authed->delete('/auth/tokens/:id') ->to('Me#delete_token');
-    $authed->post  ('/scan')            ->to('Me#trigger_scan');
+
+
+    $authed->get   ('/scan/active')     ->to('Scan#active');
+    $authed->get   ('/scan/jobs/:id')   ->to('Scan#show');
+    $authed->post  ('/scan')            ->to('Scan#trigger');
+
+    $authed->get('/artists')          ->to('Library#artists');
+    $authed->get('/artists/:id')      ->to('Library#artist_detail');
+    $authed->get('/albums')           ->to('Library#albums');
+    $authed->get('/albums/:id')       ->to('Library#album_detail');
+    $authed->get('/tracks/:id')       ->to('Library#track_detail');
+    $authed->get('/stream/:track_id') ->to('Stream#stream');
 }
 
 1;
