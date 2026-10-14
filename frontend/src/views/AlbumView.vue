@@ -2,13 +2,11 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import api from '@/api/client'
-import { useI18n } from 'vue-i18n'
 import { usePlayerStore, type Track } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import TrackRow from '@/components/TrackRow.vue'
 import AlbumCover from '@/components/AlbumCover.vue'
 
-const { t } = useI18n()
 const route = useRoute()
 const player = usePlayerStore()
 const favorites = useFavoritesStore()
@@ -40,23 +38,23 @@ function playAll() {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto">
-    <p v-if="loading" class="text-stone-500">{{ $t('common.loading') }}</p>
-    <p v-else-if="error" class="text-red-600">{{ error }}</p>
+  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
+    <p v-else-if="error" class="text-danger">{{ error }}</p>
 
     <template v-else-if="album">
       <header class="mb-8 flex flex-col sm:flex-row gap-6">
         <AlbumCover
           :album-id="album.id"
           :rounded="false"
-          class="!w-48 !h-48 !rounded-xl shadow-md"
+          class="!w-48 !h-48 !rounded-xl shadow-2xl"
         />
         <div class="flex flex-col justify-end">
-          <p class="text-xs uppercase tracking-widest text-stone-400 mb-2">
+          <p class="text-xs uppercase tracking-widest text-dim mb-2">
             {{ $t('album.label') }}
           </p>
           <h1 class="text-4xl font-semibold tracking-tight">{{ album.title }}</h1>
-          <p class="text-stone-600 mt-2">
+          <p class="text-muted mt-2">
             <RouterLink v-if="album.artist_id" :to="`/artists/${album.artist_id}`"
                         class="hover:underline">{{ album.artist_name }}</RouterLink>
             <span v-if="album.year"> · {{ album.year }}</span>
@@ -65,8 +63,8 @@ function playAll() {
           <button
             @click="playAll"
             :disabled="!tracks.length"
-            class="mt-6 self-start px-5 py-2.5 bg-stone-900 text-white rounded-full text-sm
-                   font-medium hover:bg-stone-800 disabled:opacity-40 transition-colors"
+            class="mt-6 self-start px-5 py-2.5 bg-accent text-white rounded-full text-sm
+                   font-medium hover:opacity-90 disabled:opacity-40 transition-opacity"
           >
             ▶ {{ $t('album.playAll') }}
           </button>

@@ -56,33 +56,31 @@ onUnmounted(() => document.removeEventListener('click', onDocClick))
   <div ref="root" class="relative">
     <button
       @click="toggle"
-      class="p-1.5 rounded-full hover:bg-stone-100 transition-colors text-stone-400"
+      class="p-1.5 rounded-full hover-surface transition-colors text-muted"
       :aria-label="$t('playlists.addTo')"
-    >
-      ⋯
-    </button>
+    >⋯</button>
 
     <div
       v-if="open"
-      class="absolute right-0 mt-1 w-56 bg-white border border-stone-200 rounded-lg
-             shadow-lg z-30 py-1 text-sm"
+      class="absolute right-0 mt-1 w-56 bg-surface border border-app rounded-lg
+             shadow-xl z-30 py-1 text-sm text-app"
     >
-      <div v-if="playlists.items.length === 0" class="px-3 py-2 text-stone-500 text-xs">
+      <div v-if="playlists.items.length === 0" class="px-3 py-2 text-muted text-xs">
         {{ $t('playlists.noneYet') }}
       </div>
       <button
         v-for="p in playlists.items"
         :key="p.id"
         @click.stop="pick(p.id, p.name)"
-        class="block w-full text-left px-3 py-1.5 hover:bg-stone-100 truncate"
+        class="block w-full text-left px-3 py-1.5 hover-surface truncate"
       >
         {{ p.name }}
-        <span class="text-stone-400 text-xs">· {{ p.track_count }}</span>
+        <span class="text-dim text-xs">· {{ p.track_count }}</span>
       </button>
-      <div class="border-t border-stone-100 my-1" />
+      <div class="border-t border-app my-1" />
       <button
         @click="newPlaylist"
-        class="block w-full text-left px-3 py-1.5 hover:bg-stone-100 text-amber-600 font-medium"
+        class="block w-full text-left px-3 py-1.5 hover-surface text-accent font-medium"
       >
         + {{ $t('playlists.newPlaylist') }}
       </button>

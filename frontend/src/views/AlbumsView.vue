@@ -34,12 +34,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-6xl mx-auto">
+  <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
     <h1 class="text-3xl font-semibold tracking-tight mb-8">{{ $t('albums.title') }}</h1>
 
-    <p v-if="loading" class="text-stone-500">{{ $t('common.loading') }}</p>
-    <p v-else-if="error" class="text-red-600">{{ error }}</p>
-    <p v-else-if="!albums.length" class="text-stone-500">{{ $t('albums.empty') }}</p>
+    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
+    <p v-else-if="error" class="text-danger">{{ error }}</p>
+    <p v-else-if="!albums.length" class="text-muted">{{ $t('albums.empty') }}</p>
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       <RouterLink
@@ -48,14 +48,14 @@ onMounted(async () => {
         :to="`/albums/${a.id}`"
         class="group block"
       >
-        <div class="aspect-square rounded-xl overflow-hidden shadow-sm
-                    group-hover:shadow-md group-hover:-translate-y-0.5
+        <div class="aspect-square rounded-xl overflow-hidden shadow-lg
+                    group-hover:shadow-xl group-hover:-translate-y-0.5
                     transition-all">
           <AlbumCover :album-id="a.id" fill />
         </div>
         <div class="mt-3">
-          <div class="text-sm font-medium truncate">{{ a.title }}</div>
-          <div class="text-xs text-stone-500 truncate">
+          <div class="text-sm font-medium truncate text-app">{{ a.title }}</div>
+          <div class="text-xs text-muted truncate">
             <template v-if="a.artist_name">{{ a.artist_name }}</template>
             <template v-if="a.artist_name && a.year"> · </template>
             <template v-if="a.year">{{ a.year }}</template>

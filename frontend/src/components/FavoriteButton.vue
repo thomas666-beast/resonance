@@ -11,7 +11,6 @@ const filled = computed(() => favorites.isFavorited(props.trackId))
 async function onClick(e: MouseEvent) {
   e.stopPropagation()
   popping.value = false
-  // retrigger animation on next tick
   requestAnimationFrame(() => { popping.value = true })
   setTimeout(() => { popping.value = false }, 320)
   await favorites.toggle(props.trackId)
@@ -23,14 +22,14 @@ async function onClick(e: MouseEvent) {
     @click="onClick"
     :aria-label="filled ? 'Unfavorite' : 'Favorite'"
     :aria-pressed="filled"
-    class="p-1.5 rounded-full hover:bg-stone-100 transition-colors"
+    class="p-1.5 rounded-full hover-surface transition-colors"
     :class="{ 'heart-pop': popping }"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       class="w-5 h-5 transition-colors"
-      :class="filled ? 'fill-amber-500 stroke-amber-500' : 'fill-none stroke-stone-400'"
+      :class="filled ? 'fill-accent stroke-accent' : 'fill-none stroke-muted'"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"

@@ -13,6 +13,7 @@ import ScanButton from '@/components/ScanButton.vue'
 import ScanProgress from '@/components/ScanProgress.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import ToastHost from '@/components/ToastHost.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -51,45 +52,46 @@ async function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col bg-app text-app">
     <header
       v-if="auth.accessToken"
-      class="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur-sm"
+      class="sticky top-0 z-20 border-b border-app bg-surface/90 backdrop-blur-sm"
     >
       <div class="px-6 py-3 flex items-center gap-6 max-w-6xl mx-auto w-full">
-        <RouterLink to="/" class="text-lg font-semibold tracking-tight shrink-0">
+        <RouterLink to="/" class="text-lg font-semibold tracking-tight shrink-0 text-app">
           {{ $t('app.title') }}
         </RouterLink>
 
         <nav class="flex items-center gap-1 text-sm shrink-0">
           <RouterLink to="/artists"
-            class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
-            active-class="bg-stone-100 font-medium">{{ $t('nav.artists') }}</RouterLink>
+            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            active-class="bg-surface-2 font-medium">{{ $t('nav.artists') }}</RouterLink>
           <RouterLink to="/albums"
-            class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
-            active-class="bg-stone-100 font-medium">{{ $t('nav.albums') }}</RouterLink>
+            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            active-class="bg-surface-2 font-medium">{{ $t('nav.albums') }}</RouterLink>
           <RouterLink to="/favorites"
-            class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
-            active-class="bg-stone-100 font-medium">{{ $t('nav.favorites') }}</RouterLink>
+            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            active-class="bg-surface-2 font-medium">{{ $t('nav.favorites') }}</RouterLink>
           <RouterLink to="/playlists"
-            class="px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
-            active-class="bg-stone-100 font-medium">{{ $t('nav.playlists') }}</RouterLink>
+            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            active-class="bg-surface-2 font-medium">{{ $t('nav.playlists') }}</RouterLink>
         </nav>
 
         <SearchBox />
 
         <div class="ml-auto flex items-center gap-3 text-sm shrink-0">
           <ScanButton />
+          <ThemeToggle />
           <select
             v-model="localeStore.current"
             @change="localeStore.set(localeStore.current)"
-            class="border border-stone-200 rounded-full px-3 py-1 text-sm bg-white"
+            class="border border-app rounded-full px-3 py-1 text-sm bg-surface text-app"
             :aria-label="$t('nav.language')"
           >
             <option v-for="l in SUPPORTED_LOCALES" :key="l" :value="l">{{ l.toUpperCase() }}</option>
           </select>
-          <span class="text-stone-600">{{ auth.user?.username }}</span>
-          <button @click="logout" class="text-stone-500 hover:text-red-600 transition-colors">
+          <span class="text-muted">{{ auth.user?.username }}</span>
+          <button @click="logout" class="text-muted hover:text-danger transition-colors">
             {{ $t('nav.logout') }}
           </button>
         </div>

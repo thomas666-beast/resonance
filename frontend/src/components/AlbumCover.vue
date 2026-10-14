@@ -21,11 +21,7 @@ const src = computed(() => {
 
 const sizeClass = computed(() => {
   if (props.fill) return 'w-full h-full'
-  return {
-    sm: 'w-10 h-10',
-    md: 'w-14 h-14',
-    lg: 'w-16 h-16',
-  }[props.size]
+  return { sm: 'w-10 h-10', md: 'w-14 h-14', lg: 'w-16 h-16' }[props.size]
 })
 
 const roundedClass = computed(() =>
@@ -38,7 +34,7 @@ const roundedClass = computed(() =>
     :class="[
       sizeClass,
       roundedClass,
-      'bg-stone-100 overflow-hidden flex items-center justify-center shrink-0'
+      'bg-surface-2 overflow-hidden flex items-center justify-center shrink-0'
     ]"
   >
     <img
@@ -52,7 +48,7 @@ const roundedClass = computed(() =>
       v-else
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      class="w-1/2 h-1/2 stroke-stone-300 fill-none"
+      class="w-1/2 h-1/2 fill-none stroke-muted"
       stroke-width="1.5"
     >
       <circle cx="12" cy="12" r="9" />

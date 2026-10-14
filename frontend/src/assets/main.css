@@ -1,47 +1,103 @@
 @import "tailwindcss";
 
+/* ── Theme tokens ──────────────────────────────────── */
+
 :root {
-  --color-bg: theme(colors.stone.50);
-  --color-surface: #ffffff;
-  --color-text: theme(colors.stone.900);
-  --color-muted: theme(colors.stone.500);
-  --color-border: theme(colors.stone.200);
-  --color-accent: theme(colors.amber.500);
+  --bg:         #0c0a09;  /* stone-950 */
+  --surface:    #1c1917;  /* stone-900 */
+  --surface-2:  #292524;  /* stone-800 */
+  --border:     #292524;  /* stone-800 */
+  --border-hi:  #44403c;  /* stone-700 */
+  --text:       #fafaf9;  /* stone-50 */
+  --text-muted: #a8a29e;  /* stone-400 */
+  --text-dim:   #78716c;  /* stone-500 */
+  --accent:     #f59e0b;  /* amber-500 */
+  --accent-hi:  #fbbf24;  /* amber-400 */
+  --danger:     #ef4444;  /* red-500 */
+  --success:    #22c55e;  /* green-500 */
 }
 
-html, body, #app {
-  height: 100%;
+html.light {
+  --bg:         #fafaf9;
+  --surface:    #ffffff;
+  --surface-2:  #f5f5f4;
+  --border:     #e7e5e4;
+  --border-hi:  #d6d3d1;
+  --text:       #1c1917;
+  --text-muted: #57534e;
+  --text-dim:   #78716c;
+  --accent:     #d97706;
+  --accent-hi:  #f59e0b;
+  --danger:     #dc2626;
+  --success:    #16a34a;
 }
+
+/* ── Base ──────────────────────────────────────────── */
+
+html, body, #app { height: 100%; }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--bg);
+  color: var(--text);
   font-feature-settings: "ss01", "cv01";
   -webkit-font-smoothing: antialiased;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
-h1, h2, h3 {
-  letter-spacing: -0.015em;
+h1, h2, h3 { letter-spacing: -0.015em; }
+
+/* ── Semantic utilities ────────────────────────────── */
+
+.bg-app       { background: var(--bg); }
+.bg-surface   { background: var(--surface); }
+.bg-surface-2 { background: var(--surface-2); }
+.bg-accent    { background: var(--accent); }
+.bg-danger    { background: var(--danger); }
+.hover-surface:hover { background: var(--surface-2); }
+.hover-surface-2:hover { background: var(--surface-2); }
+
+.border-app    { border-color: var(--border); }
+.border-hi     { border-color: var(--border-hi); }
+.border-accent { border-color: var(--accent); }
+
+.text-app     { color: var(--text); }
+.text-muted   { color: var(--text-muted); }
+.text-dim     { color: var(--text-dim); }
+.text-accent  { color: var(--accent); }
+.text-accent-hi { color: var(--accent-hi); }
+.text-danger  { color: var(--danger); }
+.text-success { color: var(--success); }
+
+.fill-accent  { fill: var(--accent); }
+.stroke-accent { stroke: var(--accent); }
+.stroke-muted { stroke: var(--text-muted); }
+
+/* ── Range input theming ───────────────────────────── */
+
+input[type="range"] {
+  accent-color: var(--accent);
+  background: transparent;
 }
 
-/* Heart pop animation — 300ms, one-shot */
+/* ── Heart pop animation ───────────────────────────── */
+
 @keyframes heart-pop {
   0%   { transform: scale(1); }
   40%  { transform: scale(1.25); }
   100% { transform: scale(1); }
 }
-
 .heart-pop {
   animation: heart-pop 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Slim scrollbar in scroll containers */
+/* ── Scrollbars ────────────────────────────────────── */
+
 .scroll-slim::-webkit-scrollbar { width: 8px; }
 .scroll-slim::-webkit-scrollbar-track { background: transparent; }
 .scroll-slim::-webkit-scrollbar-thumb {
-  background: theme(colors.stone.300);
+  background: var(--border-hi);
   border-radius: 999px;
 }
 .scroll-slim::-webkit-scrollbar-thumb:hover {
-  background: theme(colors.stone.400);
+  background: var(--text-dim);
 }

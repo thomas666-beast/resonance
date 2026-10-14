@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { usePlayerStore } from '@/stores/player'
 import AlbumCover from './AlbumCover.vue'
 
-const { t } = useI18n()
 const player = usePlayerStore()
 
 const seeking = ref(false)
@@ -39,8 +37,8 @@ function onVolumeInput(e: Event) {
 <template>
   <div
     v-if="player.current"
-    class="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white/95 backdrop-blur-sm
-           px-6 py-3 flex items-center gap-4 shadow-lg z-30"
+    class="fixed bottom-0 left-0 right-0 border-t border-app bg-surface/95 backdrop-blur-sm
+           px-6 py-3 flex items-center gap-4 shadow-2xl z-30 text-app"
   >
     <div class="flex items-center gap-3 min-w-0 flex-1">
       <AlbumCover
@@ -50,7 +48,7 @@ function onVolumeInput(e: Event) {
       />
       <div class="min-w-0">
         <div class="text-sm font-medium truncate">{{ player.current.title }}</div>
-        <div class="text-xs text-stone-500 truncate">
+        <div class="text-xs text-muted truncate">
           {{ player.current.artist_name ?? '—' }}
           <span v-if="player.current.album_title"> · {{ player.current.album_title }}</span>
         </div>
@@ -60,30 +58,26 @@ function onVolumeInput(e: Event) {
     <div class="flex items-center gap-2">
       <button
         @click="player.prev()"
-        class="px-2 py-1 hover:bg-stone-100 rounded transition-colors"
+        class="px-2 py-1 hover-surface rounded transition-colors"
         aria-label="Previous"
-      >
-        ⏮
-      </button>
+      >⏮</button>
       <button
         @click="player.toggle()"
-        class="px-3 py-1 bg-stone-900 text-white rounded-full hover:bg-stone-800
-               transition-colors"
+        class="px-3 py-1 bg-accent text-white rounded-full hover:opacity-90
+               transition-opacity"
         :aria-label="player.playing ? 'Pause' : 'Play'"
       >
         {{ player.playing ? '❚❚' : '▶' }}
       </button>
       <button
         @click="player.next()"
-        class="px-2 py-1 hover:bg-stone-100 rounded transition-colors"
+        class="px-2 py-1 hover-surface rounded transition-colors"
         aria-label="Next"
-      >
-        ⏭
-      </button>
+      >⏭</button>
     </div>
 
     <div class="flex-1 flex items-center gap-3">
-      <span class="text-xs text-stone-500 w-10 text-right tabular-nums">
+      <span class="text-xs text-muted w-10 text-right tabular-nums">
         {{ fmt(displayPosition) }}
       </span>
       <input
@@ -94,14 +88,14 @@ function onVolumeInput(e: Event) {
         :value="displayPosition"
         @input="onSeekInput"
         @change="onSeekCommit"
-        class="flex-1 accent-stone-900"
+        class="flex-1"
         aria-label="Seek"
       />
-      <span class="text-xs text-stone-500 w-10 tabular-nums">{{ fmt(player.duration) }}</span>
+      <span class="text-xs text-muted w-10 tabular-nums">{{ fmt(player.duration) }}</span>
     </div>
 
     <div class="flex items-center gap-2 w-32">
-      <span class="text-xs">🔊</span>
+      <span class="text-xs text-muted">🔊</span>
       <input
         type="range"
         min="0"
@@ -109,7 +103,7 @@ function onVolumeInput(e: Event) {
         step="0.01"
         :value="player.volume"
         @input="onVolumeInput"
-        class="flex-1 accent-stone-900"
+        class="flex-1"
         aria-label="Volume"
       />
     </div>

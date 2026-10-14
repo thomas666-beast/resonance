@@ -4,9 +4,9 @@ import { useToastStore } from '@/stores/toast'
 const toast = useToastStore()
 
 const styles = {
-  success: 'bg-stone-900 text-white',
-  error:   'bg-red-600 text-white',
-  info:    'bg-stone-700 text-white',
+  success: 'bg-surface-2 text-app border border-app',
+  error:   'bg-danger text-white',
+  info:    'bg-surface-2 text-app border border-app',
 }
 </script>
 
@@ -25,7 +25,7 @@ const styles = {
         :key="t.id"
         :class="[
           styles[t.type],
-          'pointer-events-auto rounded-lg shadow-lg px-4 py-2.5 text-sm max-w-sm flex items-center gap-3',
+          'pointer-events-auto rounded-lg shadow-xl px-4 py-2.5 text-sm max-w-sm flex items-center gap-3',
         ]"
       >
         <span class="flex-1">{{ t.message }}</span>

@@ -33,20 +33,20 @@ function isCurrent(): boolean {
   <div
     @click="play"
     class="group flex items-center gap-4 px-3 py-2 rounded-lg cursor-pointer
-           hover:bg-white transition-colors"
-    :class="{ 'bg-white shadow-sm': isCurrent() }"
+           hover-surface transition-colors"
+    :class="{ 'bg-surface-2': isCurrent() }"
   >
     <div class="w-6 text-right text-sm tabular-nums"
-         :class="isCurrent() ? 'text-amber-500 font-semibold' : 'text-stone-400'">
+         :class="isCurrent() ? 'text-accent font-semibold' : 'text-dim'">
       {{ index ?? track.track_number ?? '·' }}
     </div>
 
     <div class="min-w-0 flex-1">
       <div class="truncate text-sm font-medium"
-           :class="isCurrent() ? 'text-amber-600' : 'text-stone-900'">
+           :class="isCurrent() ? 'text-accent' : 'text-app'">
         {{ track.title }}
       </div>
-      <div v-if="showArtist || showAlbum" class="truncate text-xs text-stone-500 mt-0.5">
+      <div v-if="showArtist || showAlbum" class="truncate text-xs text-muted mt-0.5">
         <template v-if="showArtist && track.artist_id">
           <RouterLink :to="`/artists/${track.artist_id}`" @click.stop
                       class="hover:underline">{{ track.artist_name }}</RouterLink>
@@ -66,7 +66,7 @@ function isCurrent(): boolean {
       <AddToPlaylistMenu :track-id="track.id" />
     </div>
 
-    <div class="text-xs text-stone-500 tabular-nums w-12 text-right">
+    <div class="text-xs text-muted tabular-nums w-12 text-right">
       {{ fmt(track.duration_ms) }}
     </div>
   </div>

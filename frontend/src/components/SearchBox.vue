@@ -61,62 +61,63 @@ onUnmounted(() => {
       @focus="onFocus"
       type="search"
       :placeholder="$t('search.placeholder')"
-      class="w-full border border-stone-200 rounded-full px-4 py-1.5 text-sm
-             bg-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+      class="w-full border border-app rounded-full px-4 py-1.5 text-sm
+             bg-surface text-app placeholder:text-dim
+             focus:outline-none focus:border-accent"
     />
 
     <div
       v-if="search.open && (search.query.length >= 2)"
-      class="absolute top-full left-0 right-0 mt-2 bg-white border border-stone-200
-             rounded-xl shadow-lg z-40 max-h-[70vh] overflow-y-auto scroll-slim"
+      class="absolute top-full left-0 right-0 mt-2 bg-surface border border-app
+             rounded-xl shadow-xl z-40 max-h-[70vh] overflow-y-auto scroll-slim"
     >
-      <p v-if="search.loading" class="px-4 py-3 text-sm text-stone-500">
+      <p v-if="search.loading" class="px-4 py-3 text-sm text-muted">
         {{ $t('common.loading') }}
       </p>
-      <p v-else-if="!hasResults" class="px-4 py-3 text-sm text-stone-500">
+      <p v-else-if="!hasResults" class="px-4 py-3 text-sm text-muted">
         {{ $t('search.noResults') }}
       </p>
 
       <template v-else>
         <div v-if="search.artists.length" class="py-2">
-          <div class="px-4 py-1 text-xs uppercase tracking-widest text-stone-400">
+          <div class="px-4 py-1 text-xs uppercase tracking-widest text-dim">
             {{ $t('nav.artists') }}
           </div>
           <button
             v-for="a in search.artists"
             :key="`a${a.id}`"
             @click="go(`/artists/${a.id}`)"
-            class="block w-full text-left px-4 py-1.5 hover:bg-stone-100 text-sm"
+            class="block w-full text-left px-4 py-1.5 hover-surface text-sm text-app"
           >{{ a.name }}</button>
         </div>
 
-        <div v-if="search.albums.length" class="py-2 border-t border-stone-100">
-          <div class="px-4 py-1 text-xs uppercase tracking-widest text-stone-400">
+        <div v-if="search.albums.length" class="py-2 border-t border-app">
+          <div class="px-4 py-1 text-xs uppercase tracking-widest text-dim">
             {{ $t('albums.label') }}
           </div>
           <button
             v-for="a in search.albums"
             :key="`al${a.id}`"
             @click="go(`/albums/${a.id}`)"
-            class="block w-full text-left px-4 py-1.5 hover:bg-stone-100 text-sm"
+            class="block w-full text-left px-4 py-1.5 hover-surface text-sm text-app"
           >
             <span class="font-medium">{{ a.title }}</span>
-            <span v-if="a.artist_name" class="text-stone-500"> · {{ a.artist_name }}</span>
+            <span v-if="a.artist_name" class="text-muted"> · {{ a.artist_name }}</span>
           </button>
         </div>
 
-        <div v-if="search.tracks.length" class="py-2 border-t border-stone-100">
-          <div class="px-4 py-1 text-xs uppercase tracking-widest text-stone-400">
+        <div v-if="search.tracks.length" class="py-2 border-t border-app">
+          <div class="px-4 py-1 text-xs uppercase tracking-widest text-dim">
             {{ $t('search.tracks') }}
           </div>
           <button
             v-for="t in search.tracks"
             :key="`t${t.id}`"
             @click="go(`/albums/${t.album_id}`)"
-            class="block w-full text-left px-4 py-1.5 hover:bg-stone-100 text-sm"
+            class="block w-full text-left px-4 py-1.5 hover-surface text-sm text-app"
           >
             <span class="font-medium">{{ t.title }}</span>
-            <span v-if="t.artist_name" class="text-stone-500"> · {{ t.artist_name }}</span>
+            <span v-if="t.artist_name" class="text-muted"> · {{ t.artist_name }}</span>
           </button>
         </div>
       </template>

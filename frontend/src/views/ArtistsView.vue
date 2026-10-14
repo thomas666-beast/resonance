@@ -26,21 +26,21 @@ async function load() {
 
 onMounted(load)
 
-// When a scan finishes, reload
-watch(() => scan.lastResult, (r) => {
-  if (r) load()
-})
+watch(() => scan.lastResult, (r) => { if (r) load() })
 </script>
 
 <template>
-  <div class="p-8">
+  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
     <h1 class="text-2xl font-bold mb-6">{{ $t('artists.title') }}</h1>
-    <p v-if="loading" class="text-gray-500">{{ $t('artists.loading') }}</p>
-    <p v-else-if="error" class="text-red-600">{{ error }}</p>
-    <p v-else-if="artists.length === 0" class="text-gray-500">{{ $t('artists.empty') }}</p>
-    <ul v-else class="space-y-2">
+    <p v-if="loading" class="text-muted">{{ $t('artists.loading') }}</p>
+    <p v-else-if="error" class="text-danger">{{ error }}</p>
+    <p v-else-if="artists.length === 0" class="text-muted">{{ $t('artists.empty') }}</p>
+    <ul v-else class="space-y-1">
       <li v-for="a in artists" :key="a.id">
-        <RouterLink :to="`/artists/${a.id}`" class="hover:underline">{{ a.name }}</RouterLink>
+        <RouterLink :to="`/artists/${a.id}`"
+                    class="block px-3 py-2 rounded-lg hover-surface transition-colors">
+          {{ a.name }}
+        </RouterLink>
       </li>
     </ul>
   </div>

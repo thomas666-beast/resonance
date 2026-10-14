@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import VueDraggable from 'vuedraggable'
 import api from '@/api/client'
@@ -19,7 +19,6 @@ const playlist = ref<Playlist | null>(null)
 const tracks = ref<Track[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const editable = ref(true)
 
 const localTracks = computed({
   get: () => tracks.value,
@@ -28,12 +27,10 @@ const localTracks = computed({
 
 onMounted(async () => {
   try {
-    const { data } = await Promise.all([
-      api.get(`/playlists/${route.params.id}`),
-      favorites.loaded ? Promise.resolve() : favorites.load(),
-    ]).then(([r]) => r)
+    const { data } = await api.get(`/playlists/${route.params.id}`)
     playlist.value = data.playlist
     tracks.value = data.tracks
+    if (!favorites.loaded) favorites.load()
   } catch (e: any) {
     error.value = e.response?.data?.error ?? 'Failed to load playlist'
   } finally {
@@ -60,30 +57,30 @@ function playAll() {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto">
-    <p v-if="loading" class="text-stone-500">{{ $t('common.loading') }}</p>
-    <p v-else-if="error" class="text-red-600">{{ error }}</p>
+  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
+    <p v-else-if="error" class="text-danger">{{ error }}</p>
 
     <template v-else-if="playlist">
       <header class="mb-8">
-        <p class="text-xs uppercase tracking-widest text-stone-400 mb-2">
+        <p class="text-xs uppercase tracking-widest text-dim mb-2">
           {{ $t('playlists.label') }}
         </p>
         <h1 class="text-4xl font-semibold tracking-tight">{{ playlist.name }}</h1>
-        <p v-if="playlist.description" class="text-stone-600 mt-2">{{ playlist.description }}</p>
-        <p class="text-stone-500 text-sm mt-1">{{ $t('playlists.trackCount', { n: tracks.length }) }}</p>
+        <p v-if="playlist.description" class="text-muted mt-2">{{ playlist.description }}</p>
+        <p class="text-dim text-sm mt-1">{{ $t('playlists.trackCount', { n: tracks.length }) }}</p>
 
         <button
           @click="playAll"
           :disabled="!tracks.length"
-          class="mt-6 px-5 py-2.5 bg-stone-900 text-white rounded-full text-sm font-medium
-                 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+          class="mt-6 px-5 py-2.5 bg-accent text-white rounded-full text-sm font-medium
+                 hover:opacity-90 disabled:opacity-40 transition-opacity"
         >
           ▶ {{ $t('album.playAll') }}
         </button>
       </header>
 
-      <p v-if="!tracks.length" class="text-stone-500">{{ $t('playlists.noTracks') }}</p>
+      <p v-if="!tracks.length" class="text-muted">{{ $t('playlists.noTracks') }}</p>
 
       <VueDraggable
         v-else
@@ -93,29 +90,24 @@ function playAll() {
         :animation="150"
         @end="onReorder"
         class="space-y-0.5"
-        >
-          <template #item="{ element: t, index: i }">
-            <div class="flex items-center">
-              <span class="drag-handle cursor-grab text-stone-300 px-2 select-none">⋮⋮</span>
-              <div class="flex-1">
-                  <TrackRow
-                  :track="t"
-                  :queue="tracks"
-                  :index="i + 1"
-                  show-artist
-                  >
-                  <template #actions>
-                      <button
-                      @click.stop="removeTrack(t.id)"
-                      class="p-1.5 rounded-full hover:bg-stone-100 text-stone-400"
-                      :aria-label="$t('playlists.remove')"
-                      >✕</button>
-                  </template>
-                  </TrackRow>
-              </div>
+      >
+        <template #item="{ element: t, index: i }">
+          <div class="flex items-center">
+            <span class="drag-handle cursor-grab text-dim px-2 select-none">⋮⋮</span>
+            <div class="flex-1">
+              <TrackRow :track="t" :queue="tracks" :index="i + 1" show-artist>
+                <template #actions>
+                  <button
+                    @click.stop="removeTrack(t.id)"
+                    class="p-1.5 rounded-full hover-surface text-muted"
+                    :aria-label="$t('playlists.remove')"
+                  >✕</button>
+                </template>
+              </TrackRow>
             </div>
-          </template>
-        </VueDraggable>
+          </div>
+        </template>
+      </VueDraggable>
     </template>
   </div>
 </template>

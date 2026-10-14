@@ -24,16 +24,17 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8 pb-32">
-    <p v-if="loading">Loading…</p>
-    <p v-else-if="error" class="text-red-600">{{ error }}</p>
+  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+    <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
+    <p v-else-if="error" class="text-danger">{{ error }}</p>
     <template v-else-if="artist">
-      <h1 class="text-3xl font-bold mb-6">{{ artist.name }}</h1>
-      <h2 class="text-lg font-semibold mb-3">Albums</h2>
-      <ul class="space-y-2">
+      <h1 class="text-4xl font-semibold tracking-tight mb-8">{{ artist.name }}</h1>
+      <h2 class="text-lg font-semibold mb-3 text-muted">{{ $t('albums.title') }}</h2>
+      <ul class="space-y-1">
         <li v-for="a in albums" :key="a.id">
-          <RouterLink :to="`/albums/${a.id}`" class="hover:underline">
-            {{ a.title }} <span v-if="a.year" class="text-gray-500">({{ a.year }})</span>
+          <RouterLink :to="`/albums/${a.id}`"
+                      class="block px-3 py-2 rounded-lg hover-surface transition-colors">
+            {{ a.title }} <span v-if="a.year" class="text-muted">({{ a.year }})</span>
           </RouterLink>
         </li>
       </ul>
