@@ -1,7 +1,8 @@
 import { createI18n } from 'vue-i18n'
 import en from './locales/en.json'
+import es from './locales/es.json'
 
-const SUPPORTED = ['en']
+const SUPPORTED = ['en', 'es']
 const DEFAULT = 'en'
 
 function detectLocale(): string {
@@ -17,7 +18,7 @@ export const i18n = createI18n({
   globalInjection: true,
   locale: detectLocale(),
   fallbackLocale: DEFAULT,
-  messages: { en },
+  messages: { en, es },
 })
 
 export const SUPPORTED_LOCALES = SUPPORTED
