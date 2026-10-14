@@ -2,6 +2,7 @@ package Resonance::Controller::Admin;
 use Mojo::Base 'Mojolicious::Controller', -signatures;
 
 use Resonance::Auth qw(hash_password);
+use Resonance::Util::Transcode qw(transcode_cache_stats clear_transcode_cache);
 
 # ── users ────────────────────────────────────────────────
 
@@ -180,6 +181,15 @@ sub stats ($c) {
         recent_plays => $recent,
         scan_paths => $scans,
     });
+}
+
+sub transcode_stats ($c) {
+    $c->render(json => { cache => transcode_cache_stats($c->app) });
+}
+
+sub transcode_clear ($c) {
+    my $removed = clear_transcode_cache($c->app);
+    $c->render(json => { ok => \1, removed => $removed });
 }
 
 1;

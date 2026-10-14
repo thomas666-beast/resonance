@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Dotenv;
+use Resonance;
+use Resonance::Job::TranscodeCleanup;
+
+my $env_file = "$FindBin::Bin/../../.env";
+Dotenv->load($env_file) if -e $env_file;
+
+my $days = shift @ARGV // 30;
+
+my $app = Resonance->new;
+my $result = Resonance::Job::TranscodeCleanup::run($app, $days);
+
+printf "Removed %d files, freed %.1f MB\n",
+    $result->{removed},
+    $result->{freed} / 1024 / 1024;

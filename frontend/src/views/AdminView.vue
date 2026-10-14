@@ -13,6 +13,7 @@ import Skeleton from '@/components/Skeleton.vue'
 const { t } = useI18n()
 const auth = useAuthStore()
 const toast = useToastStore()
+const transcodeCache = ref<{ bytes: number; files: number; human: string } | null>(null)
 
 interface User {
   id: number
@@ -144,6 +145,18 @@ async function onCreated() {
 function fmtDate(s: string | null): string {
   if (!s) return '—'
   return new Date(s).toLocaleString()
+}
+
+async function loadTranscodeStats() {
+  const { data } = await api.get('/admin/transcode')
+  transcodeCache.value = data.cache
+}
+
+async function clearTranscode() {
+  if (!confirm(t('admin.transcodeConfirm'))) return
+  const { data } = await api.delete('/admin/transcode')
+  toast.success(t('admin.transcodeCleared', { n: data.removed }))
+  await loadTranscodeStats()
 }
 
 onMounted(() => {
@@ -294,6 +307,28 @@ onMounted(() => {
             <span v-if="p.artist_name" class="text-muted"> · {{ p.artist_name }}</span>
           </span>
         </div>
+      </div>
+    </section>
+
+    <!-- Transcode cache -->
+    <section v-if="transcodeCache" class="mb-10">
+      <h2 class="text-heading mb-4">{{ $t('admin.transcodeCache') }}</h2>
+      <div class="bg-surface border border-app rounded-xl p-5 flex items-center gap-6">
+        <div class="flex-1">
+          <div class="text-2xl font-semibold tabular">{{ transcodeCache.human }}</div>
+          <div class="text-label mt-1">
+            {{ $t('admin.transcodeFiles', { n: transcodeCache.files }) }}
+          </div>
+        </div>
+        <button
+          @click="clearTranscode"
+          :disabled="transcodeCache.files === 0"
+          class="px-4 py-2 rounded-full text-sm font-medium border border-app
+                  hover:text-danger hover:border-danger disabled:opacity-40
+                  transition-colors"
+        >
+          {{ $t('admin.transcodeClear') }}
+        </button>
       </div>
     </section>
 

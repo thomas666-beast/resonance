@@ -137,7 +137,12 @@
     "noResults": "No users match your search.",
     "noUsers": "No users yet.",
     "recentActivity": "Recent activity",
-    "delete": "Delete"
+    "delete": "Delete",
+    "transcodeCache": "Transcode cache",
+    "transcodeFiles": "{n} files",
+    "transcodeClear": "Clear cache",
+    "transcodeConfirm": "Delete all cached transcodes? They'll be regenerated on demand.",
+    "transcodeCleared": "Removed {n} files"
   },
   "settings": {
     "title": "Settings",
