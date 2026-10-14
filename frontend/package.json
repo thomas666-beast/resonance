@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "axios": "^1.20.0",
+    "howler": "^2.2.4",
     "pinia": "^4.0.3",
     "vue": "^3.5.42",
     "vue-i18n": "^11.4.14",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node24": "^24.0.5",
+    "@types/howler": "^2.2.13",
     "@types/node": "^24.13.4",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/tsconfig": "^0.9.1",

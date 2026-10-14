@@ -3,6 +3,7 @@ import { RouterView, RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { SUPPORTED_LOCALES } from '@/i18n'
+import PlayerBar from '@/components/PlayerBar.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -27,16 +28,15 @@ async function logout() {
           class="border rounded px-2 py-1 text-sm"
           :aria-label="$t('nav.language')"
         >
-          <option v-for="l in SUPPORTED_LOCALES" :key="l" :value="l">
-            {{ l.toUpperCase() }}
-          </option>
+          <option v-for="l in SUPPORTED_LOCALES" :key="l" :value="l">{{ l.toUpperCase() }}</option>
         </select>
         <span class="text-gray-600">{{ auth.user?.username }}</span>
         <button @click="logout" class="text-red-600 hover:underline">{{ $t('nav.logout') }}</button>
       </div>
     </header>
-    <main class="flex-1 bg-gray-50">
+    <main class="flex-1 bg-gray-50 pb-24">
       <RouterView />
     </main>
+    <PlayerBar v-if="auth.accessToken" />
   </div>
 </template>

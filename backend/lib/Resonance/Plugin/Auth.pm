@@ -9,13 +9,19 @@ sub register ($self, $app, $conf) {
             my $header = $c->req->headers->authorization // '';
             my ($scheme, $token) = split /\s+/, $header, 2;
 
+            # Fallback: ?token=… — only allowed on /api/stream/*
+            if ((!defined $scheme || lc($scheme) ne 'bearer') && $c->req->url->path =~ m{^/api/stream/}) {
+                $token = $c->param('token');
+                $scheme = 'bearer' if defined $token;
+            }
+
             unless (defined $scheme && lc($scheme) eq 'bearer' && defined $token) {
                 $c->render(
                     status => 401,
                     json   => { error => 'missing_token',
                                 message => 'Authorization: Bearer <token> required' },
                 );
-                return;   # false → halt the chain
+                return;
             }
 
             my $payload = verify_access_token($c->config->{jwt}{secret}, $token);
@@ -25,12 +31,12 @@ sub register ($self, $app, $conf) {
                     json   => { error => 'invalid_token',
                                 message => 'Token invalid or expired' },
                 );
-                return;   # false → halt the chain
+                return;
             }
 
             $c->stash(current_user_id => $payload->{sub});
             $c->stash(jwt_payload     => $payload);
-            return 1;     # true → continue to the actual route
+            return 1;
         });
     });
 }
