@@ -35,3 +35,7 @@ logs/
 cover_db/
 .nyc_output/
 coverage/
+
+
+data/
+backend/data/

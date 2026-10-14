@@ -145,12 +145,6 @@ npm install
 npm run dev
 ```
 
-### All services via Docker
-
-```bash
-docker compose up -d
-```
-
 ---
 
 ## Configuration
@@ -205,15 +199,15 @@ resonance/
 | Phase | Goal                                 | Status |
 | ----- | ------------------------------------ | ------ |
 | 0     | Project skeleton                     | ✅     |
-| 1     | Backend boots + Postgres + Redis     | ⏳     |
-| 2     | Database schema + migrations         | ⏳     |
-| 3     | Auth — JWT, refresh, device tokens   | ⏳     |
-| 4     | Library scanning (Minion jobs)       | ⏳     |
-| 5     | REST API — browse, search, stream    | ⏳     |
-| 6     | Frontend boots + login + browse      | ⏳     |
-| 7     | Player — queue, now-playing          | ⏳     |
-| 8     | Realtime — WebSocket events          | ⏳     |
-| 9     | Playlists + favorites                | ⏳     |
+| 1     | Backend boots + Postgres + Redis     | ✅     |
+| 2     | Database schema + migrations         | ✅     |
+| 3     | Auth — JWT, refresh, device tokens   | ✅     |
+| 4     | Library scanning (Minion jobs)       | ✅     |
+| 5     | REST API — browse, search, stream    | ✅     |
+| 6     | Frontend boots + login + browse      | ✅     |
+| 7     | Player — queue, now-playing          | ✅     |
+| 8     | Realtime — WebSocket events          | ✅     |
+| 9     | Playlists + favorites                | ✅     |
 | 10    | Polish — transcode, themes, shortcuts| ⏳     |
 
 ---
