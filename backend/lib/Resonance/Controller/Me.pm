@@ -61,4 +61,25 @@ sub delete_token ($c) {
     $c->render(json => { ok => \1 });
 }
 
+sub trigger_scan ($c) {
+    my $body = $c->req->json // {};
+    my $path = $body->{path} // $c->config->{media_root};
+
+    unless ($path && -d $path) {
+        return $c->render(status => 400, json => { error => 'invalid_path' });
+    }
+
+    # Upsert scan_path
+    my $sp = $c->pg->db->query(
+        q{INSERT INTO scan_paths (path) VALUES (?)
+          ON CONFLICT (path) DO UPDATE SET path = EXCLUDED.path
+          RETURNING id},
+        $path,
+    )->hash;
+
+    my $job_id = $c->minion->enqueue('scan' => [$sp->{id}]);
+
+    $c->render(json => { job_id => $job_id, scan_path_id => $sp->{id} });
+}
+
 1;

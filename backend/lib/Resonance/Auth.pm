@@ -3,9 +3,8 @@ use Mojo::Base -strict, -signatures;
 
 use Crypt::Argon2 qw/argon2id_pass argon2id_verify/;
 use Crypt::JWT    qw/encode_jwt decode_jwt/;
-use Crypt::PRNG   qw/random_string/;
+use Crypt::PRNG   qw/random_string random_string_from/;
 use Digest::SHA   qw/sha256_hex/;
-use Crypt::PRNG qw/random_string random_string_from/;
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
@@ -31,6 +30,8 @@ sub verify_password ($encoded, $password) {
 # ── Access tokens (JWT, HS256) ───────────────────────────
 
 sub issue_access_token ($secret, $user_id, $ttl = 900, $extra = {}) {
+    $ttl //= 900;   # caller may pass undef explicitly
+
     die "JWT secret must be at least 32 bytes\n"
         unless defined $secret && length($secret) >= 32;
 
@@ -44,9 +45,9 @@ sub issue_access_token ($secret, $user_id, $ttl = 900, $extra = {}) {
     };
 
     return encode_jwt(
-        payload    => $payload,
-        key        => $secret,
-        alg        => 'HS256',
+        payload => $payload,
+        key     => $secret,
+        alg     => 'HS256',
     );
 }
 
@@ -66,12 +67,13 @@ sub verify_access_token ($secret, $token) {
 # ── Refresh & device tokens (opaque, hashed at rest) ─────
 
 sub generate_refresh_token () {
-    # 32 bytes of randomness, base64url-ish safe alphabet
-    return random_string_from('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_', 32);
+    return random_string_from(
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_',
+        32,
+    );
 }
 
 sub generate_device_token () {
-    # Longer, prefixed so it's identifiable in logs/UI
     return 'rsk_' . random_string(48);
 }
 
