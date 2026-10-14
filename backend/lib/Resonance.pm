@@ -124,6 +124,9 @@ sub startup ($self) {
     $authed->get('/search')->to('Search#search');
 
     $authed->get('/cover/:album_id')->to('Cover#show');
+
+    $authed->get ('/home')              ->to('Home#index');
+    $authed->post('/plays/:track_id')   ->to('Plays#log_play');
 }
 
 1;

@@ -87,5 +87,19 @@
     "addedToPlaylist": "Added to {name}",
     "createdAndAdded": "Created {name} and added track",
     "genericError": "Something went wrong"
+  },
+  "home": {
+    "recentlyPlayed": "Recently played",
+    "recentlyAdded": "Recently added",
+    "newAlbums": "New albums",
+    "yourFavorites": "Your favorites",
+    "yourPlaylists": "Your playlists",
+    "emptyTitle": "Your library is empty",
+    "emptyDescription": "Scan your music folder to see your library here."
+  },
+  "scan": {
+    "start": "Scan library",
+    "running": "Scanning…",
+    "done": "Scan complete: {inserted} added, {updated} updated, {failed} failed"
   }
 }
