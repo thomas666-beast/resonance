@@ -119,12 +119,20 @@ sub album_detail ($c) {
 
     my $tracks = $c->pg->db->query(
         q{SELECT id, title, track_number, disc_number,
-                 duration_ms, bitrate, sample_rate, channels, codec
+                 duration_ms, bitrate, sample_rate, channels, codec,
+                 album_id, artist_id
             FROM tracks
            WHERE album_id = ?
            ORDER BY disc_number NULLS FIRST, track_number NULLS FIRST, title},
         $id,
     )->hashes->to_array;
+
+    # Attach album + artist names so the PlayerBar can render them
+    # without a second lookup. Every track here belongs to $album.
+    for my $t (@$tracks) {
+        $t->{album_title}  = $album->{title};
+        $t->{artist_name}  = $album->{artist_name};
+    }
 
     $c->render(json => { album => $album, tracks => $tracks });
 }

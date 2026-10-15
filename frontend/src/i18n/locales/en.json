@@ -52,6 +52,11 @@
     "emptyTitle": "Your library is empty",
     "emptyDescription": "Scan your music folder to get started."
   },
+  "album": {
+    "label": "Label",
+    "trackCount": "Track count",
+    "playAll": "Play all"
+  },
   "artists": {
     "title": "Artists",
     "empty": "No artists yet.",

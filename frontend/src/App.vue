@@ -14,6 +14,7 @@ import ScanProgress from '@/components/ScanProgress.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import ToastHost from '@/components/ToastHost.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { usePlayerStore } from '@/stores/player'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -24,6 +25,8 @@ const favorites = useFavoritesStore()
 const playlistsStore = usePlaylistsStore()
 
 const isNowPlaying = computed(() => route.name === 'now-playing')
+
+const player = usePlayerStore()
 
 useKeyboard()
 
@@ -42,6 +45,7 @@ watch(() => auth.accessToken, (t) => {
     playlistsStore.load()
   } else {
     scan.disconnect()
+    player.stop()
   }
 })
 
@@ -49,9 +53,11 @@ onUnmounted(() => scan.disconnect())
 
 async function logout() {
   scan.disconnect()
+  player.stop()
   await auth.logout()
   router.push({ name: 'login' })
 }
+
 </script>
 
 <template>

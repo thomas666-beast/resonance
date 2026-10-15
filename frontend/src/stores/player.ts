@@ -109,6 +109,21 @@ export const usePlayerStore = defineStore('player', () => {
 
   function pause() { howl?.pause() }
 
+  function stop() {
+    if (howl) {
+      howl.stop()
+      howl.unload()
+      howl = null
+    }
+    stopTicker()
+    playing.value = false
+    position.value = 0
+    duration.value = 0
+    queue.value = []
+    index.value = -1
+    loggedFor = null
+  }
+
   function toggle() {
     playing.value ? pause() : play()
   }
@@ -153,6 +168,6 @@ export const usePlayerStore = defineStore('player', () => {
 
   return {
     queue, index, playing, position, duration, volume, current,
-    playTrack, play, pause, toggle, next, prev, seek, setVolume,
+    playTrack, play, pause, toggle, next, prev, seek, setVolume, stop
   }
 })
