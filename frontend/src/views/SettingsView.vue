@@ -7,6 +7,51 @@ import { useToastStore } from '@/stores/toast'
 const { t } = useI18n()
 const toast = useToastStore()
 
+// ── change password ─────────────────────────────────────
+
+const currentPassword = ref('')
+const newPassword     = ref('')
+const confirmPassword = ref('')
+const changing        = ref(false)
+
+async function changePassword() {
+  if (newPassword.value !== confirmPassword.value) {
+    toast.error(t('auth.errors.passwordsMismatch'))
+    return
+  }
+  if (newPassword.value.length < 8) {
+    toast.error(t('auth.errors.passwordTooShort'))
+    return
+  }
+  if (newPassword.value === currentPassword.value) {
+    toast.error(t('settings.passwordUnchanged'))
+    return
+  }
+
+  changing.value = true
+  try {
+    await api.post('/auth/change-password', {
+      current_password: currentPassword.value,
+      new_password:     newPassword.value,
+    })
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    toast.success(t('settings.passwordChanged'))
+  } catch (e: any) {
+    const code = e.response?.data?.error
+    if (code === 'invalid_password') {
+      toast.error(t('settings.wrongCurrentPassword'))
+    } else {
+      toast.error(t('toasts.genericError'))
+    }
+  } finally {
+    changing.value = false
+  }
+}
+
+// ── subsonic password ───────────────────────────────────
+
 const configured = ref(false)
 const password   = ref('')
 const confirm    = ref('')
@@ -51,6 +96,62 @@ onMounted(load)
   <div class="p-4 md:p-8 pb-32 max-w-2xl mx-auto text-app">
     <h1 class="text-display mb-8">{{ $t('settings.title') }}</h1>
 
+    <!-- Change password -->
+    <section class="bg-surface border border-app rounded-xl p-6 mb-6 anim-fade-slide">
+      <h2 class="text-heading mb-2">{{ $t('settings.changePasswordTitle') }}</h2>
+      <p class="text-muted text-sm leading-relaxed mb-4">
+        {{ $t('settings.changePasswordDescription') }}
+      </p>
+
+      <form @submit.prevent="changePassword" class="space-y-4">
+        <label class="block">
+          <span class="text-sm text-muted">{{ $t('settings.currentPassword') }}</span>
+          <input
+            v-model="currentPassword"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="mt-1 w-full border border-app bg-surface-2 text-app rounded-lg
+                   px-3 py-2 focus:outline-none focus:border-accent"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-sm text-muted">{{ $t('settings.newPassword') }}</span>
+          <input
+            v-model="newPassword"
+            type="password"
+            required
+            autocomplete="new-password"
+            class="mt-1 w-full border border-app bg-surface-2 text-app rounded-lg
+                   px-3 py-2 focus:outline-none focus:border-accent"
+          />
+        </label>
+
+        <label class="block">
+          <span class="text-sm text-muted">{{ $t('auth.confirmPassword') }}</span>
+          <input
+            v-model="confirmPassword"
+            type="password"
+            required
+            autocomplete="new-password"
+            class="mt-1 w-full border border-app bg-surface-2 text-app rounded-lg
+                   px-3 py-2 focus:outline-none focus:border-accent"
+          />
+        </label>
+
+        <button
+          type="submit"
+          :disabled="changing"
+          class="px-4 py-2 bg-accent text-white rounded-full text-sm font-medium
+                 hover:opacity-90 disabled:opacity-50 transition-opacity"
+        >
+          {{ changing ? $t('common.loading') : $t('settings.changePassword') }}
+        </button>
+      </form>
+    </section>
+
+    <!-- Subsonic password -->
     <section class="bg-surface border border-app rounded-xl p-6 anim-fade-slide">
       <h2 class="text-heading mb-2">{{ $t('settings.subsonicTitle') }}</h2>
       <p class="text-muted text-sm leading-relaxed mb-4">

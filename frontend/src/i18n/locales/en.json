@@ -178,7 +178,15 @@
     "status": "Status",
     "configured": "Configured",
     "notConfigured": "Not configured",
-    "save": "Save"
+    "save": "Save",
+    "changePasswordTitle": "Change password",
+    "changePasswordDescription": "Changing your password signs out all other devices. This session stays logged in.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password updated",
+    "passwordUnchanged": "New password must be different from the current one",
+    "wrongCurrentPassword": "Current password is incorrect"
   },
     "queue": {
     "title": "Queue",

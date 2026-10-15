@@ -40,8 +40,8 @@ function onVolumeInput(e: Event) {
 <template>
   <div
     v-if="player.current"
-    class="fixed bottom-0 left-0 right-0 border-t border-app bg-surface/95 backdrop-blur-sm
-           shadow-2xl z-30 text-app"
+    class="border-t border-app bg-surface/95 backdrop-blur-sm
+           shadow-2xl text-app"
   >
     <!-- Desktop layout -->
     <div class="hidden md:flex px-6 py-3 items-center gap-4">
