@@ -22,7 +22,10 @@ sub artists ($c) {
     if (defined $q && length $q) {
         $sql = q{SELECT id, name, sort_name, image_path
                    FROM artists
-                  WHERE name ILIKE ? OR sort_name ILIKE ?
+                  WHERE (name ILIKE ? OR sort_name ILIKE ?)
+                    AND EXISTS (SELECT 1 FROM tracks t
+                                 WHERE t.artist_id = artists.id
+                                   AND t.missing_at IS NULL)
                   ORDER BY coalesce(sort_name, name)
                   LIMIT ? OFFSET ?};
         @args = ("%$q%", "%$q%", $limit, $offset);
@@ -30,6 +33,9 @@ sub artists ($c) {
     else {
         $sql = q{SELECT id, name, sort_name, image_path
                    FROM artists
+                  WHERE EXISTS (SELECT 1 FROM tracks t
+                                 WHERE t.artist_id = artists.id
+                                   AND t.missing_at IS NULL)
                   ORDER BY coalesce(sort_name, name)
                   LIMIT ? OFFSET ?};
         @args = ($limit, $offset);
@@ -53,13 +59,17 @@ sub artist_detail ($c) {
     return $c->render(status => 404, json => { error => 'artist_not_found' })
         unless $artist;
 
-    # Only show top-level albums on the artist page;
-    # sub-albums surface inside the parent album's detail view.
+    # Top-level albums only; children appear inside album detail.
+    # An album with no visible tracks is hidden entirely.
     my $albums = $c->pg->db->query(
-        q{SELECT id, title, year, cover_path, parent_id
-            FROM albums
-           WHERE artist_id = ? AND parent_id IS NULL
-           ORDER BY year NULLS LAST, title},
+        q{SELECT a.id, a.title, a.year, a.cover_path, a.parent_id
+            FROM albums a
+           WHERE a.artist_id = ?
+             AND a.parent_id IS NULL
+             AND EXISTS (SELECT 1 FROM tracks t
+                          WHERE t.album_id = a.id
+                            AND t.missing_at IS NULL)
+           ORDER BY a.year NULLS LAST, a.title},
         $id,
     )->hashes->to_array;
 
@@ -81,6 +91,9 @@ sub albums ($c) {
         push @where, 'a.parent_id IS NULL';
     }
 
+    push @where, 'EXISTS (SELECT 1 FROM tracks t '
+               . 'WHERE t.album_id = a.id AND t.missing_at IS NULL)';
+
     if (defined $q && length $q) {
         push @where, 'a.title ILIKE ?';
         push @args, "%$q%";
@@ -90,13 +103,14 @@ sub albums ($c) {
         push @args, $artist_id;
     }
 
-    my $where = @where ? 'WHERE ' . join(' AND ', @where) : '';
+    my $where = 'WHERE ' . join(' AND ', @where);
 
     my $rows = $c->pg->db->query(
         qq{SELECT a.id, a.title, a.year, a.cover_path,
                   a.artist_id, ar.name AS artist_name,
                   a.parent_id,
-                  (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS track_count,
+                  (SELECT count(*) FROM tracks t
+                    WHERE t.album_id = a.id AND t.missing_at IS NULL) AS track_count,
                   (SELECT count(*) FROM albums c WHERE c.parent_id = a.id) AS child_count
              FROM albums a
              LEFT JOIN artists ar ON ar.id = a.artist_id
@@ -129,13 +143,14 @@ sub album_detail ($c) {
     return $c->render(status => 404, json => { error => 'album_not_found' })
         unless $album;
 
-    # Tracks belonging directly to this album
+    # Active tracks only
     my $tracks = $c->pg->db->query(
         q{SELECT id, title, track_number, disc_number,
                  duration_ms, bitrate, sample_rate, channels, codec,
                  album_id, artist_id
             FROM tracks
            WHERE album_id = ?
+             AND missing_at IS NULL
            ORDER BY disc_number NULLS FIRST, track_number NULLS FIRST, title},
         $id,
     )->hashes->to_array;
@@ -145,14 +160,18 @@ sub album_detail ($c) {
         $t->{artist_name} = $album->{artist_name};
     }
 
-    # Sub-albums nested under this album, with their tracks preloaded
+    # Sub-albums with active tracks only, and only if they contain any
     my $children = $c->pg->db->query(
         q{SELECT a.id, a.title, a.year, a.cover_path, a.parent_id,
-                 (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS track_count,
+                 (SELECT count(*) FROM tracks t
+                   WHERE t.album_id = a.id AND t.missing_at IS NULL) AS track_count,
                  (SELECT COALESCE(SUM(t.duration_ms), 0)
-                    FROM tracks t WHERE t.album_id = a.id) AS duration_ms
+                    FROM tracks t
+                   WHERE t.album_id = a.id AND t.missing_at IS NULL) AS duration_ms
             FROM albums a
            WHERE a.parent_id = ?
+             AND EXISTS (SELECT 1 FROM tracks t
+                          WHERE t.album_id = a.id AND t.missing_at IS NULL)
            ORDER BY a.year NULLS LAST, a.title},
         $id,
     )->hashes->to_array;
@@ -164,6 +183,7 @@ sub album_detail ($c) {
                      album_id, artist_id
                 FROM tracks
                WHERE album_id = ?
+                 AND missing_at IS NULL
                ORDER BY disc_number NULLS FIRST, track_number NULLS FIRST, title},
             $child->{id},
         )->hashes->to_array;
@@ -199,7 +219,8 @@ sub track_detail ($c) {
             FROM tracks t
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
-           WHERE t.id = ?},
+           WHERE t.id = ?
+             AND t.missing_at IS NULL},
         $id,
     )->hash;
 

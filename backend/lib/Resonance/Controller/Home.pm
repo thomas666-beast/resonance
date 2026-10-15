@@ -16,6 +16,7 @@ sub index ($c) {
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
            WHERE p.user_id = ?
+             AND t.missing_at IS NULL
         GROUP BY t.id, t.title, t.duration_ms,
                  t.album_id, al.title,
                  t.artist_id, ar.name
@@ -32,21 +33,25 @@ sub index ($c) {
             FROM tracks t
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
+           WHERE t.missing_at IS NULL
            ORDER BY t.created_at DESC
            LIMIT 12},
     )->hashes->to_array;
 
-    # Recent albums — for the "new albums" tiles
+    # Recent albums — only albums that still have at least one active track
     my $recent_albums = $db->query(
         q{SELECT a.id, a.title, a.year,
                  a.artist_id, ar.name AS artist_name
             FROM albums a
             LEFT JOIN artists ar ON ar.id = a.artist_id
+           WHERE EXISTS (SELECT 1 FROM tracks t
+                          WHERE t.album_id = a.id
+                            AND t.missing_at IS NULL)
            ORDER BY a.created_at DESC
            LIMIT 6},
     )->hashes->to_array;
 
-    # Favorites preview
+    # Favorites preview — active tracks only
     my $favorites = $db->query(
         q{SELECT t.id, t.title, t.duration_ms,
                  t.album_id, al.title AS album_title,
@@ -56,6 +61,7 @@ sub index ($c) {
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
            WHERE f.user_id = ?
+             AND t.missing_at IS NULL
         ORDER BY f.created_at DESC
            LIMIT 6},
         $uid,
@@ -64,7 +70,10 @@ sub index ($c) {
     # Playlists preview
     my $playlists = $db->query(
         q{SELECT p.id, p.name,
-                 (SELECT count(*) FROM playlist_tracks pt WHERE pt.playlist_id = p.id) AS track_count
+                 (SELECT count(*) FROM playlist_tracks pt
+                    JOIN tracks t ON t.id = pt.track_id
+                   WHERE pt.playlist_id = p.id
+                     AND t.missing_at IS NULL) AS track_count
             FROM playlists p
            WHERE p.user_id = ?
         ORDER BY p.updated_at DESC NULLS LAST, p.created_at DESC
