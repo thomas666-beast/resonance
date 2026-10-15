@@ -233,12 +233,12 @@ sub _routes_admin ($self, $authed) {
 }
 
 sub _routes_radio ($self, $authed) {
-    $authed->get   ('/radio')       ->to('Radio#list');
-    $authed->get   ('/radio/:id')   ->to('Radio#show');
-    $authed->post  ('/radio')       ->to('Radio#create');
-    $authed->patch ('/radio/:id')   ->to('Radio#update');
-    $authed->delete('/radio/:id')   ->to('Radio#remove');
-    # Streaming endpoint lives in Resonance::Controller::Radio::Stream (20b)
+    $authed->get   ('/radio')               ->to('Radio#list');
+    $authed->get   ('/radio/:id')           ->to('Radio#show');
+    $authed->get   ('/radio/:id/stream')    ->to('Radio::Stream#stream');
+    $authed->post  ('/radio')               ->to('Radio#create');
+    $authed->patch ('/radio/:id')           ->to('Radio#update');
+    $authed->delete('/radio/:id')           ->to('Radio#remove');
 }
 
 1;

@@ -188,7 +188,7 @@
     "passwordUnchanged": "New password must be different from the current one",
     "wrongCurrentPassword": "Current password is incorrect"
   },
-    "queue": {
+  "queue": {
     "title": "Queue",
     "nowPlaying": "Now playing",
     "nextUp": "Next up",
@@ -197,5 +197,10 @@
     "empty": "Nothing is playing.",
     "clearUpcoming": "Clear",
     "remove": "Remove from queue"
+  },
+  "radio": {
+    "title": "Radio",
+    "stop": "Stop",
+    "live": "LIVE"
   }
 }

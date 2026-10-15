@@ -12,7 +12,11 @@ sub register ($self, $app, $conf) {
             # Fallback: ?token=… on stream and websocket routes only
             my $path = $c->req->url->path // '';
             if ((!defined $scheme || lc($scheme) ne 'bearer')
-                && (($path =~ m{^/api/(?:stream|cover)/} || $path =~ m{^/api/ws}))) {
+                && (   $path =~ m{^/api/stream/}
+                    || $path =~ m{^/api/cover/}
+                    || $path =~ m{^/api/radio/\d+/stream}
+                    || $path =~ m{^/api/ws}
+                )) {
                 $token = $c->param('token');
                 $scheme = 'bearer' if defined $token;
             }

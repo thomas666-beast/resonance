@@ -15,6 +15,16 @@ export interface Track {
   artist_name: string | null
 }
 
+export interface RadioStation {
+  id: number
+  name: string
+  stream_url: string
+  homepage_url: string | null
+  logo_url: string | null
+  genre: string | null
+  bitrate: number | null
+}
+
 export const usePlayerStore = defineStore('player', () => {
   const queue = ref<Track[]>([])
   const index = ref(-1)
@@ -23,25 +33,34 @@ export const usePlayerStore = defineStore('player', () => {
   const duration = ref(0)
   const volume = ref(Number(localStorage.getItem('resonance_volume') ?? 1))
 
+  // 'library' | 'radio' — controls which UI affordances appear
+  const source = ref<'library' | 'radio'>('library')
+  const currentRadio = ref<RadioStation | null>(null)
+
   let howl: Howl | null = null
   let rafId: number | null = null
   let loggedFor: number | null = null
 
   const current = computed<Track | null>(() => {
+    if (source.value === 'radio') return null
     const i = index.value
     if (i < 0 || i >= queue.value.length) return null
     return queue.value[i] ?? null
   })
 
   const upcoming = computed<Track[]>(() => {
+    if (source.value === 'radio') return []
     if (index.value < 0) return []
     return queue.value.slice(index.value + 1)
   })
 
   const played = computed<Track[]>(() => {
+    if (source.value === 'radio') return []
     if (index.value <= 0) return []
     return queue.value.slice(0, index.value)
   })
+
+  const isLive = computed(() => source.value === 'radio')
 
   function stopTicker() {
     if (rafId !== null) {
@@ -64,7 +83,7 @@ export const usePlayerStore = defineStore('player', () => {
     try {
       await api.post(`/plays/${trackId}`)
     } catch {
-      // silent — play logging is best-effort
+      // silent
     }
   }
 
@@ -74,6 +93,9 @@ export const usePlayerStore = defineStore('player', () => {
       howl = null
     }
     stopTicker()
+
+    source.value = 'library'
+    currentRadio.value = null
 
     const token = (window as any).__resonance_access_token
 
@@ -101,6 +123,52 @@ export const usePlayerStore = defineStore('player', () => {
     howl.play()
   }
 
+  function playRadio(station: RadioStation) {
+    if (howl) {
+      howl.unload()
+      howl = null
+    }
+    stopTicker()
+
+    // Stop any library playback completely
+    queue.value = []
+    index.value = -1
+    loggedFor = null
+
+    source.value = 'radio'
+    currentRadio.value = station
+    position.value = 0
+    duration.value = 0
+
+    const token = (window as any).__resonance_access_token
+
+    howl = new Howl({
+      src: [`/api/radio/${station.id}/stream?token=${encodeURIComponent(token ?? '')}`],
+      html5: true,
+      volume: volume.value,
+      // Live streams have no length; onload may never fire
+      onplay: () => {
+        playing.value = true
+        // No ticker for radio — no position to track
+      },
+      onpause: () => { playing.value = false },
+      onstop:  () => { playing.value = false },
+      onend:   () => { playing.value = false },  // fires if upstream ends
+    })
+
+    howl.play()
+  }
+
+  function stopRadio() {
+    if (howl) {
+      howl.unload()
+      howl = null
+    }
+    playing.value = false
+    source.value = 'library'
+    currentRadio.value = null
+  }
+
   function playTrack(track: Track, newQueue: Track[] = [track]) {
     if (track.id !== loggedFor) loggedFor = null
     queue.value = newQueue
@@ -109,6 +177,15 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function play() {
+    if (source.value === 'radio') {
+      if (howl) {
+        howl.play()
+      } else if (currentRadio.value) {
+        playRadio(currentRadio.value)
+      }
+      return
+    }
+
     const cur = current.value
     if (!howl && cur) {
       load(cur)
@@ -124,6 +201,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function next() {
+    if (source.value === 'radio') return  // no next for radio
     const nextIndex = index.value + 1
     if (nextIndex >= queue.value.length) {
       pause()
@@ -137,6 +215,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function prev() {
+    if (source.value === 'radio') return  // no prev for radio
     if (index.value <= 0) return
     const prevIndex = index.value - 1
     const t = queue.value[prevIndex]
@@ -147,6 +226,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function seek(seconds: number) {
+    if (source.value === 'radio') return
     if (!howl) return
     howl.seek(seconds)
     position.value = seconds
@@ -158,7 +238,7 @@ export const usePlayerStore = defineStore('player', () => {
     localStorage.setItem('resonance_volume', String(v))
   }
 
-  // ── queue operations ───────────────────────────────────
+  // ── queue operations (library only) ─────────────────────
 
   function _reindexByCurrentTrackId(currentId: number | undefined, fallbackIndex: number) {
     if (currentId === undefined) {
@@ -180,24 +260,18 @@ export const usePlayerStore = defineStore('player', () => {
   function removeAt(targetIndex: number) {
     if (targetIndex < 0 || targetIndex >= queue.value.length) return
 
-    // If removing the current track, keep playing it but detach from the queue list
     const isCurrent = targetIndex === index.value
     const currentId = current.value?.id
 
     queue.value.splice(targetIndex, 1)
 
     if (isCurrent) {
-      // The current track is no longer in the queue.
-      // Leave playback going, position the index at the "next" slot.
       if (index.value >= queue.value.length) {
-        // was last — keep playing but nothing else queued
         index.value = queue.value.length
       }
-      // else: index stays put, now points to what was next
       return
     }
 
-    // Recompute index for the still-playing current track
     if (targetIndex < index.value) {
       index.value -= 1
     } else {
@@ -222,7 +296,6 @@ export const usePlayerStore = defineStore('player', () => {
       return
     }
 
-    // Adjust index for the still-playing current track
     if (from < index.value && to >= index.value) {
       index.value -= 1
     } else if (from > index.value && to <= index.value) {
@@ -253,6 +326,8 @@ export const usePlayerStore = defineStore('player', () => {
     queue.value = []
     index.value = -1
     loggedFor = null
+    source.value = 'library'
+    currentRadio.value = null
   }
 
   Howler.autoUnlock = true
@@ -260,8 +335,8 @@ export const usePlayerStore = defineStore('player', () => {
 
   return {
     queue, index, playing, position, duration, volume,
-    current, upcoming, played,
-    playTrack, play, pause, toggle, next, prev, seek, setVolume,
+    source, current, currentRadio, upcoming, played, isLive,
+    playTrack, playRadio, stopRadio, play, pause, toggle, next, prev, seek, setVolume,
     jumpTo, removeAt, move, clearUpcoming, stop,
   }
 })
