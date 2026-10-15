@@ -26,8 +26,9 @@ async function trigger() {
   <button
     @click="trigger"
     :disabled="triggering || scan.scanning"
-    class="text-sm px-3 py-1.5 border border-app rounded-full hover-surface
-           disabled:opacity-50 transition-colors text-app"
+    class="h-9 px-4 rounded-full text-sm font-medium text-app
+           bg-surface-2 border border-app
+           hover:border-hi disabled:opacity-50 transition-colors"
   >
     {{ scan.scanning ? $t('scan.running') : $t('scan.start') }}
   </button>

@@ -101,34 +101,43 @@ async function logout() {
 
         <SearchBox />
 
-        <div class="ml-auto flex items-center gap-3 text-sm shrink-0">
+        <div class="ml-auto flex items-center gap-2 text-sm shrink-0">
           <RouterLink
             to="/settings"
-            class="p-1.5 rounded-full hover:bg-surface-2 transition-colors text-muted"
+            class="w-9 h-9 rounded-full bg-surface-2 border border-app
+                  flex items-center justify-center text-muted
+                  hover:text-app hover:border-hi transition-colors"
             :aria-label="$t('settings.title')"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
+                class="w-4 h-4 fill-none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </RouterLink>
+
           <ScanButton />
           <ThemeToggle />
+
           <select
             v-model="localeStore.current"
             @change="localeStore.set(localeStore.current)"
-            class="border border-app rounded-full px-3 py-1 text-sm bg-surface text-app"
+            class="h-9 border border-app rounded-full px-3 text-sm bg-surface-2 text-app
+                  hover:border-hi transition-colors"
             :aria-label="$t('nav.language')"
           >
             <option v-for="l in SUPPORTED_LOCALES" :key="l" :value="l">{{ l.toUpperCase() }}</option>
           </select>
+
           <span class="text-muted px-2">{{ auth.user?.username }}</span>
+
           <button
             @click="logout"
-            class="px-3 py-1.5 rounded-full text-sm text-muted
-                  hover:bg-surface-2 hover:text-danger transition-colors"
+            class="h-9 px-4 rounded-full text-sm font-medium text-app
+                  bg-surface-2 border border-app
+                  hover:bg-danger hover:border-danger hover:text-white
+                  transition-colors"
           >
             {{ $t('nav.logout') }}
           </button>
