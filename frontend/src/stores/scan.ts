@@ -36,7 +36,6 @@ export const useScanStore = defineStore('scan', () => {
 
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
     const url = `${proto}//${location.host}/api/ws?token=${encodeURIComponent(token)}`
-
     ws = new WebSocket(url)
 
     ws.onopen = () => {

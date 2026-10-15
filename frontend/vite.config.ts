@@ -10,7 +10,16 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/ws': {
+        target: 'ws://127.0.0.1:3000',
+        ws: true,
+        changeOrigin: false,
+      },
       '/api': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: false,
+      },
+      '/rest': {
         target: 'http://127.0.0.1:3000',
         changeOrigin: false,
       },

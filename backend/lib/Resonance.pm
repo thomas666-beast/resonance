@@ -8,6 +8,8 @@ use File::Basename qw(dirname);
 use Mojo::Pg;
 use Mojo::Redis;
 
+use Resonance::Auth ();
+
 our $VERSION = '0.01';
 
 sub startup ($self) {
@@ -98,6 +100,43 @@ sub _register_routes ($self) {
 
     $self->_routes_subsonic($r);
 
+    # WebSocket route — must be registered as websocket, not under an auth chain
+    use Resonance::Auth qw(verify_access_token);
+
+    # ... inside _register_routes ...
+    $r->websocket('/api/ws')->to(cb => sub ($c) {
+        my $log = $c->app->log;
+
+        my $token = $c->param('token');
+        unless (defined $token && length $token) {
+            return $c->render(status => 401, text => 'missing token');
+        }
+
+        my $payload = verify_access_token($c->config->{jwt}{secret}, $token);
+        unless ($payload) {
+            return $c->render(status => 401, text => 'invalid token');
+        }
+
+        $log->debug("WS client connected (user $payload->{sub})");
+
+        my $channel = 'resonance:scan';
+        my $pubsub  = $c->redis->pubsub;
+
+        my $cb = $pubsub->listen($channel => sub ($pubsub, $message, $channel) {
+            return unless $c->tx;   # connection already gone
+            $c->send({json => {channel => $channel, data => $message}});
+        });
+
+        $c->on(finish => sub ($c, $code, $reason) {
+            $log->debug("WS client disconnected (" . ($code // '-') . ")");
+            $pubsub->unlisten($channel => $cb);
+        });
+
+        $c->on(message => sub ($c, $msg) {
+            $log->debug("WS message ignored: $msg");
+        });
+    });
+
     my $api = $r->under('/api')->to('Base#api_headers');
     $self->_routes_public($api);
 
@@ -137,7 +176,6 @@ sub _routes_scan ($self, $authed) {
     $authed->get ('/scan/active')   ->to('Scan#active');
     $authed->get ('/scan/jobs/:id') ->to('Scan#show');
     $authed->post('/scan')          ->to('Scan#trigger');
-    $authed->get ('/ws')            ->to('Scan#ws');
 }
 
 sub _routes_library ($self, $authed) {
