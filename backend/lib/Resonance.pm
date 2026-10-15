@@ -152,6 +152,7 @@ sub _register_routes ($self) {
     $self->_routes_playlists($authed);
     $self->_routes_home($authed);
     $self->_routes_admin($authed);
+    $self->_routes_radio($authed);
 }
 
 sub _routes_subsonic ($self, $r) {
@@ -229,6 +230,15 @@ sub _routes_admin ($self, $authed) {
     $admin->get   ('/admin/missing')            ->to('Admin#missing_tracks');
     $admin->post  ('/admin/missing/purge')      ->to('Admin#purge_missing');
     $admin->post  ('/admin/missing/:id/restore')->to('Admin#restore_track');
+}
+
+sub _routes_radio ($self, $authed) {
+    $authed->get   ('/radio')       ->to('Radio#list');
+    $authed->get   ('/radio/:id')   ->to('Radio#show');
+    $authed->post  ('/radio')       ->to('Radio#create');
+    $authed->patch ('/radio/:id')   ->to('Radio#update');
+    $authed->delete('/radio/:id')   ->to('Radio#remove');
+    # Streaming endpoint lives in Resonance::Controller::Radio::Stream (20b)
 }
 
 1;
