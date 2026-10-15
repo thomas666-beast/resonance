@@ -21,7 +21,8 @@
     "home": "Home",
     "menu": "Menu",
     "theme": "Theme",
-    "settings": "Settings"
+    "settings": "Settings",
+    "radio": "Radio"
   },
   "auth": {
     "signIn": "Sign in",
@@ -200,7 +201,32 @@
   },
   "radio": {
     "title": "Radio",
+    "add": "Add station",
+    "edit": "Edit station",
+    "delete": "Delete station",
+    "play": "Play",
     "stop": "Stop",
-    "live": "LIVE"
+    "homepage": "Homepage",
+    "live": "LIVE",
+    "empty": "No stations yet.",
+    "emptyTitle": "No stations yet",
+    "emptyDescription": "Ask an admin to add an internet radio stream.",
+    "emptyAdminHint": "Use the button above to add your first station.",
+    "confirmDelete": "Delete station {name}? This cannot be undone.",
+    "deleted": "Station deleted",
+    "created": "Station added",
+    "updated": "Station updated",
+    "loadFailed": "Failed to load stations",
+    "name": "Name",
+    "streamUrl": "Stream URL",
+    "homepageUrl": "Homepage URL (optional)",
+    "logoUrl": "Logo URL (optional)",
+    "genre": "Genre (optional)",
+    "bitrate": "Bitrate in kbps (optional)",
+    "publicStation": "Visible to all users",
+    "urlPlaceholder": "https://example.com/stream",
+    "urlHint": "Must be an http:// or https:// streaming URL.",
+    "nameRequired": "Name is required",
+    "invalidUrl": "Stream URL must start with http:// or https://"
   }
 }

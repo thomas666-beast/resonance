@@ -17,6 +17,7 @@ const router = createRouter({
     { path: '/now-playing',  name: 'now-playing', component: () => import('@/views/NowPlayingView.vue'),  meta: { requiresAuth: true } },
     { path: '/admin',        name: 'admin',       component: () => import('@/views/AdminView.vue'),       meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/settings',     name: 'settings',    component: () => import('@/views/SettingsView.vue'),    meta: { requiresAuth: true } },
+    { path: '/radio', name: 'radio', component: () => import('@/views/RadioView.vue'), meta: { requiresAuth: true } },
   ],
 })
 

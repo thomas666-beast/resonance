@@ -20,7 +20,9 @@ import MobileDrawer from '@/components/MobileDrawer.vue'
 import MobileSearchOverlay from '@/components/MobileSearchOverlay.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import QueuePanel from '@/components/QueuePanel.vue'
+import { useRadioStore } from '@/stores/radio'
 
+const radioStore = useRadioStore()
 const auth = useAuthStore()
 const appStore = useAppStore()
 const router = useRouter()
@@ -45,6 +47,7 @@ onMounted(() => {
     scan.connect()
     favorites.load()
     playlistsStore.load()
+    radioStore.load()
   }
 })
 
@@ -99,6 +102,9 @@ async function logout() {
           <RouterLink to="/playlists"
             class="px-3 py-1.5 rounded-full hover-surface transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.playlists') }}</RouterLink>
+          <RouterLink to="/radio"
+            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            active-class="bg-surface-2 font-medium">{{ $t('nav.radio') }}</RouterLink>
           <RouterLink v-if="auth.isAdmin" to="/admin"
             class="px-3 py-1.5 rounded-full hover-surface transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.admin') }}</RouterLink>
