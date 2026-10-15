@@ -4,6 +4,8 @@ import { RouterLink } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import AlbumCover from './AlbumCover.vue'
 
+const emit = defineEmits<{ (e: 'open-queue'): void }>()
+
 const player = usePlayerStore()
 
 const seeking = ref(false)
@@ -64,21 +66,37 @@ function onVolumeInput(e: Event) {
       <div class="flex items-center gap-2">
         <button
           @click="player.prev()"
-          class="p-2 text-muted active:text-app active:scale-95 transition-all"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-app"
           aria-label="Previous"
-        >⏮</button>
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+            <path d="M6 6h2v12H6zM9.5 12l8.5 6V6z" />
+          </svg>
+        </button>
         <button
           @click="player.toggle()"
-          class="px-3 py-1 bg-accent text-white rounded-full hover:opacity-90 transition-opacity"
+          class="w-10 h-10 rounded-full bg-accent text-white flex items-center
+                 justify-center hover:scale-105 active:scale-95 transition-transform"
           :aria-label="player.playing ? 'Pause' : 'Play'"
         >
-          {{ player.playing ? '❚❚' : '▶' }}
+          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+            <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
+            <path d="M8 5v14l11-7z" />
+          </svg>
         </button>
         <button
           @click="player.next()"
-          class="p-2 text-muted active:text-app transition-colors"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-app"
           aria-label="Next"
-        >⏭</button>
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+            <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z" />
+          </svg>
+        </button>
       </div>
 
       <div class="flex-1 flex items-center gap-3">
@@ -99,6 +117,25 @@ function onVolumeInput(e: Event) {
         <span class="text-xs text-muted w-10 tabular">{{ fmt(player.duration) }}</span>
       </div>
 
+      <button
+        @click="emit('open-queue')"
+        class="relative p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+        :aria-label="$t('queue.title')"
+        :title="$t('queue.title')"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+             class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 6h16M4 12h10M4 18h13" />
+        </svg>
+        <span
+          v-if="player.upcoming.length"
+          class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full
+                 bg-accent text-white text-[10px] font-medium flex items-center justify-center"
+        >
+          {{ player.upcoming.length }}
+        </span>
+      </button>
+
       <div class="flex items-center gap-2 w-32">
         <span class="text-xs text-muted">🔊</span>
         <input
@@ -116,36 +153,45 @@ function onVolumeInput(e: Event) {
 
     <!-- Mobile layout -->
     <div class="md:hidden">
-      <!-- Row 1: info + play/pause shortcut -->
-      <RouterLink
-        to="/now-playing"
-        class="flex items-center gap-3 px-4 pt-3 pb-2"
-      >
+      <RouterLink to="/now-playing" class="flex items-center gap-3 px-4 pt-3 pb-2">
         <AlbumCover
           v-if="player.current.album_id"
           :album-id="player.current.album_id"
           size="sm"
         />
         <div class="min-w-0 flex-1">
-          <div class="text-sm font-medium truncate text-app">
-            {{ player.current.title }}
-          </div>
+          <div class="text-sm font-medium truncate text-app">{{ player.current.title }}</div>
           <div class="text-xs text-muted truncate">
             {{ player.current.artist_name ?? '—' }}
             <span v-if="player.current.album_title"> · {{ player.current.album_title }}</span>
           </div>
         </div>
+        <button
+          @click.stop.prevent="emit('open-queue')"
+          class="relative p-2 rounded-full active:bg-surface-2 transition-colors text-muted"
+          :aria-label="$t('queue.title')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 6h16M4 12h10M4 18h13" />
+          </svg>
+          <span
+            v-if="player.upcoming.length"
+            class="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full
+                   bg-accent text-white text-[10px] font-medium flex items-center justify-center"
+          >
+            {{ player.upcoming.length }}
+          </span>
+        </button>
       </RouterLink>
 
-      <!-- Row 2: transport + seek -->
       <div class="px-4 pb-3 flex items-center gap-3">
         <button
           @click="player.prev()"
-          class="p-2 text-muted active:text-app transition-colors"
+          class="p-2 text-muted active:text-app active:scale-95 transition-all"
           aria-label="Previous"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-6 h-6 fill-current">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6 fill-current">
             <path d="M6 6h2v12H6zM9.5 12l8.5 6V6z" />
           </svg>
         </button>
@@ -168,20 +214,16 @@ function onVolumeInput(e: Event) {
 
         <button
           @click="player.next()"
-          class="p-2 text-muted active:text-app transition-colors"
+          class="p-2 text-muted active:text-app active:scale-95 transition-all"
           aria-label="Next"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-6 h-6 fill-current">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6 fill-current">
             <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z" />
           </svg>
         </button>
 
-        <!-- Slim seek bar taking the rest of the row -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
-          <span class="text-[10px] text-muted tabular shrink-0">
-            {{ fmt(displayPosition) }}
-          </span>
+          <span class="text-[10px] text-muted tabular shrink-0">{{ fmt(displayPosition) }}</span>
           <input
             type="range"
             min="0"
@@ -193,9 +235,7 @@ function onVolumeInput(e: Event) {
             class="flex-1 min-w-0"
             aria-label="Seek"
           />
-          <span class="text-[10px] text-muted tabular shrink-0">
-            {{ fmt(player.duration) }}
-          </span>
+          <span class="text-[10px] text-muted tabular shrink-0">{{ fmt(player.duration) }}</span>
         </div>
       </div>
     </div>

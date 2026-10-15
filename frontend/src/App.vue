@@ -17,7 +17,9 @@ import ToastHost from '@/components/ToastHost.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import MobileDrawer from '@/components/MobileDrawer.vue'
 import MobileSearchOverlay from '@/components/MobileSearchOverlay.vue'
+import QueuePanel from '@/components/QueuePanel.vue'
 
+const queueOpen = ref(false)
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -186,10 +188,15 @@ async function logout() {
       </RouterView>
     </main>
 
-    <PlayerBar v-if="auth.accessToken && !isNowPlaying" />
+    <PlayerBar
+      v-if="auth.accessToken && !isNowPlaying"
+      @open-queue="queueOpen = true"
+    />
     <ToastHost />
 
     <MobileDrawer :open="drawerOpen" @close="drawerOpen = false" />
     <MobileSearchOverlay :open="mobileSearchOpen" @close="mobileSearchOpen = false" />
+
+    <QueuePanel :open="queueOpen" @close="queueOpen = false" />
   </div>
 </template>

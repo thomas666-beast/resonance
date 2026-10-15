@@ -33,6 +33,16 @@ export const usePlayerStore = defineStore('player', () => {
     return queue.value[i] ?? null
   })
 
+  const upcoming = computed<Track[]>(() => {
+    if (index.value < 0) return []
+    return queue.value.slice(index.value + 1)
+  })
+
+  const played = computed<Track[]>(() => {
+    if (index.value <= 0) return []
+    return queue.value.slice(0, index.value)
+  })
+
   function stopTicker() {
     if (rafId !== null) {
       cancelAnimationFrame(rafId)
@@ -109,21 +119,6 @@ export const usePlayerStore = defineStore('player', () => {
 
   function pause() { howl?.pause() }
 
-  function stop() {
-    if (howl) {
-      howl.stop()
-      howl.unload()
-      howl = null
-    }
-    stopTicker()
-    playing.value = false
-    position.value = 0
-    duration.value = 0
-    queue.value = []
-    index.value = -1
-    loggedFor = null
-  }
-
   function toggle() {
     playing.value ? pause() : play()
   }
@@ -163,11 +158,110 @@ export const usePlayerStore = defineStore('player', () => {
     localStorage.setItem('resonance_volume', String(v))
   }
 
+  // ── queue operations ───────────────────────────────────
+
+  function _reindexByCurrentTrackId(currentId: number | undefined, fallbackIndex: number) {
+    if (currentId === undefined) {
+      index.value = Math.min(fallbackIndex, queue.value.length - 1)
+      return
+    }
+    const found = queue.value.findIndex((t) => t.id === currentId)
+    index.value = found
+  }
+
+  function jumpTo(targetIndex: number) {
+    const t = queue.value[targetIndex]
+    if (!t) return
+    index.value = targetIndex
+    loggedFor = null
+    load(t)
+  }
+
+  function removeAt(targetIndex: number) {
+    if (targetIndex < 0 || targetIndex >= queue.value.length) return
+
+    // If removing the current track, keep playing it but detach from the queue list
+    const isCurrent = targetIndex === index.value
+    const currentId = current.value?.id
+
+    queue.value.splice(targetIndex, 1)
+
+    if (isCurrent) {
+      // The current track is no longer in the queue.
+      // Leave playback going, position the index at the "next" slot.
+      if (index.value >= queue.value.length) {
+        // was last — keep playing but nothing else queued
+        index.value = queue.value.length
+      }
+      // else: index stays put, now points to what was next
+      return
+    }
+
+    // Recompute index for the still-playing current track
+    if (targetIndex < index.value) {
+      index.value -= 1
+    } else {
+      _reindexByCurrentTrackId(currentId, index.value)
+    }
+  }
+
+  function move(from: number, to: number) {
+    if (from === to) return
+    if (from < 0 || from >= queue.value.length) return
+    if (to < 0 || to >= queue.value.length) return
+
+    const currentId = current.value?.id
+    const wasCurrent = from === index.value
+
+    const [item] = queue.value.splice(from, 1)
+    if (!item) return
+    queue.value.splice(to, 0, item)
+
+    if (wasCurrent) {
+      index.value = to
+      return
+    }
+
+    // Adjust index for the still-playing current track
+    if (from < index.value && to >= index.value) {
+      index.value -= 1
+    } else if (from > index.value && to <= index.value) {
+      index.value += 1
+    } else {
+      _reindexByCurrentTrackId(currentId, index.value)
+    }
+  }
+
+  function clearUpcoming() {
+    if (index.value < 0) {
+      queue.value = []
+      return
+    }
+    queue.value = queue.value.slice(0, index.value + 1)
+  }
+
+  function stop() {
+    if (howl) {
+      howl.stop()
+      howl.unload()
+      howl = null
+    }
+    stopTicker()
+    playing.value = false
+    position.value = 0
+    duration.value = 0
+    queue.value = []
+    index.value = -1
+    loggedFor = null
+  }
+
   Howler.autoUnlock = true
   Howler.volume(volume.value)
 
   return {
-    queue, index, playing, position, duration, volume, current,
-    playTrack, play, pause, toggle, next, prev, seek, setVolume, stop
+    queue, index, playing, position, duration, volume,
+    current, upcoming, played,
+    playTrack, play, pause, toggle, next, prev, seek, setVolume,
+    jumpTo, removeAt, move, clearUpcoming, stop,
   }
 })

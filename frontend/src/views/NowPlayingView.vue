@@ -4,6 +4,12 @@ import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import AlbumCover from '@/components/AlbumCover.vue'
+import { ref } from 'vue'
+import QueuePanel from '@/components/QueuePanel.vue'
+
+const queueOpen = ref(false)
+
+const emit = defineEmits<{ (e: 'open-queue'): void }>()
 
 const router = useRouter()
 const player = usePlayerStore()
@@ -68,7 +74,7 @@ async function toggleFavorite() {
     <header class="px-8 py-6 flex items-center anim-fade-slide">
       <button
         @click="back"
-        class="p-2 rounded-full hover-surface transition-colors text-muted"
+        class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted"
         :aria-label="$t('nowPlaying.back')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -98,8 +104,7 @@ async function toggleFavorite() {
         </div>
       </div>
 
-      <div class="w-full text-center mb-8 anim-fade-slide"
-           style="animation-delay: 80ms">
+      <div class="w-full text-center mb-8 anim-fade-slide" style="animation-delay: 80ms">
         <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-app truncate">
           {{ current.title }}
         </h1>
@@ -130,10 +135,10 @@ async function toggleFavorite() {
         </div>
       </div>
 
-      <div class="flex items-center gap-8 anim-fade-slide" style="animation-delay: 240ms">
+      <div class="flex items-center gap-6 md:gap-8 anim-fade-slide" style="animation-delay: 240ms">
         <button
           @click="toggleFavorite"
-          class="p-2 rounded-full hover-surface transition-colors"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors"
           :aria-label="isFavorited ? 'Unfavorite' : 'Favorite'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -146,44 +151,58 @@ async function toggleFavorite() {
 
         <button
           @click="player.prev()"
-          class="p-2 rounded-full hover-surface transition-colors text-app"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-app"
           aria-label="Previous"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-7 h-7 fill-current">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 fill-current">
             <path d="M6 6h2v12H6zM9.5 12l8.5 6V6z" />
           </svg>
         </button>
 
         <button
           @click="player.toggle()"
-          class="w-20 h-20 rounded-full bg-accent text-white flex items-center
+          class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent text-white flex items-center
                  justify-center shadow-2xl hover:scale-105 active:scale-95
-                 transition-transform"
+                 transition-transform shrink-0"
           :aria-label="player.playing ? 'Pause' : 'Play'"
         >
           <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-9 h-9 fill-current">
+               viewBox="0 0 24 24" class="w-7 h-7 md:w-9 md:h-9 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-9 h-9 fill-current ml-1">
+               viewBox="0 0 24 24" class="w-7 h-7 md:w-9 md:h-9 fill-current ml-1">
             <path d="M8 5v14l11-7z" />
           </svg>
         </button>
 
         <button
           @click="player.next()"
-          class="p-2 rounded-full hover-surface transition-colors text-app"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-app"
           aria-label="Next"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-7 h-7 fill-current">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 fill-current">
             <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z" />
           </svg>
         </button>
 
-        <div class="w-10" aria-hidden="true" />
+        <button
+          @click="queueOpen = true"
+          class="relative p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+          :aria-label="$t('queue.title')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 6h16M4 12h10M4 18h13" />
+          </svg>
+          <span
+            v-if="player.upcoming.length"
+            class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full
+                   bg-accent text-white text-[10px] font-medium flex items-center justify-center"
+          >
+            {{ player.upcoming.length }}
+          </span>
+        </button>
       </div>
     </main>
   </div>
@@ -198,5 +217,7 @@ async function toggleFavorite() {
     </div>
     <h2 class="text-title text-app mb-2">{{ $t('nowPlaying.nothing') }}</h2>
     <p class="text-muted">{{ $t('nowPlaying.nothingHint') }}</p>
+
+    <QueuePanel :open="queueOpen" @close="queueOpen = false" />
   </div>
 </template>

@@ -167,5 +167,15 @@
     "configured": "Configured",
     "notConfigured": "Not configured",
     "save": "Save"
+  },
+    "queue": {
+    "title": "Queue",
+    "nowPlaying": "Now playing",
+    "nextUp": "Next up",
+    "played": "Played",
+    "noUpcoming": "Nothing else queued.",
+    "empty": "Nothing is playing.",
+    "clearUpcoming": "Clear",
+    "remove": "Remove from queue"
   }
 }
