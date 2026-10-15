@@ -13,7 +13,8 @@ sub search ($c) {
     my $artists = $db->query(
         q{SELECT id, name, sort_name
             FROM artists
-           WHERE lower(name) LIKE lower(?) OR lower(coalesce(sort_name,'')) LIKE lower(?)
+           WHERE (lower(name) LIKE lower(?) OR lower(coalesce(sort_name,'')) LIKE lower(?))
+           AND EXISTS (SELECT 1 FROM tracks t WHERE t.artist_id = artists.id AND t.missing_at IS NULL)
            ORDER BY similarity(lower(name), lower(?)) DESC NULLS LAST
            LIMIT 10},
         $like, $like, $q,
@@ -25,6 +26,7 @@ sub search ($c) {
             FROM albums a
             LEFT JOIN artists ar ON ar.id = a.artist_id
            WHERE lower(a.title) LIKE lower(?)
+           AND EXISTS (SELECT 1 FROM tracks t WHERE t.album_id = a.id AND t.missing_at IS NULL)
            ORDER BY similarity(lower(a.title), lower(?)) DESC NULLS LAST
            LIMIT 10},
         $like, $q,
@@ -40,8 +42,9 @@ sub search ($c) {
             FROM tracks t
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
-           WHERE t.search_tsv @@ plainto_tsquery('simple', ?)
-              OR lower(t.title) LIKE lower(?)
+           WHERE t.missing_at IS NULL
+             AND (t.search_tsv @@ plainto_tsquery('simple', ?)
+                  OR lower(t.title) LIKE lower(?))
            ORDER BY rank DESC NULLS LAST, t.title
            LIMIT 25},
         $q, $q, $like,

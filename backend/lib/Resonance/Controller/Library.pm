@@ -53,10 +53,12 @@ sub artist_detail ($c) {
     return $c->render(status => 404, json => { error => 'artist_not_found' })
         unless $artist;
 
+    # Only show top-level albums on the artist page;
+    # sub-albums surface inside the parent album's detail view.
     my $albums = $c->pg->db->query(
-        q{SELECT id, title, year, cover_path
+        q{SELECT id, title, year, cover_path, parent_id
             FROM albums
-           WHERE artist_id = ?
+           WHERE artist_id = ? AND parent_id IS NULL
            ORDER BY year NULLS LAST, title},
         $id,
     )->hashes->to_array;
@@ -70,9 +72,14 @@ sub albums ($c) {
     my ($limit, $offset) = _paginate($c);
     my $q          = $c->param('q');
     my $artist_id  = $c->param('artist_id');
+    my $include_children = $c->param('include_children') ? 1 : 0;
 
     my @where;
     my @args;
+
+    unless ($include_children) {
+        push @where, 'a.parent_id IS NULL';
+    }
 
     if (defined $q && length $q) {
         push @where, 'a.title ILIKE ?';
@@ -88,7 +95,9 @@ sub albums ($c) {
     my $rows = $c->pg->db->query(
         qq{SELECT a.id, a.title, a.year, a.cover_path,
                   a.artist_id, ar.name AS artist_name,
-                  (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS track_count
+                  a.parent_id,
+                  (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS track_count,
+                  (SELECT count(*) FROM albums c WHERE c.parent_id = a.id) AS child_count
              FROM albums a
              LEFT JOIN artists ar ON ar.id = a.artist_id
              $where
@@ -107,9 +116,12 @@ sub album_detail ($c) {
 
     my $album = $c->pg->db->query(
         q{SELECT a.id, a.title, a.year, a.cover_path,
-                 a.artist_id, ar.name AS artist_name
+                 a.artist_id, ar.name AS artist_name,
+                 a.parent_id,
+                 p.title AS parent_title
             FROM albums a
             LEFT JOIN artists ar ON ar.id = a.artist_id
+            LEFT JOIN albums p  ON p.id  = a.parent_id
            WHERE a.id = ?},
         $id,
     )->hash;
@@ -117,6 +129,7 @@ sub album_detail ($c) {
     return $c->render(status => 404, json => { error => 'album_not_found' })
         unless $album;
 
+    # Tracks belonging directly to this album
     my $tracks = $c->pg->db->query(
         q{SELECT id, title, track_number, disc_number,
                  duration_ms, bitrate, sample_rate, channels, codec,
@@ -127,14 +140,47 @@ sub album_detail ($c) {
         $id,
     )->hashes->to_array;
 
-    # Attach album + artist names so the PlayerBar can render them
-    # without a second lookup. Every track here belongs to $album.
     for my $t (@$tracks) {
-        $t->{album_title}  = $album->{title};
-        $t->{artist_name}  = $album->{artist_name};
+        $t->{album_title} = $album->{title};
+        $t->{artist_name} = $album->{artist_name};
     }
 
-    $c->render(json => { album => $album, tracks => $tracks });
+    # Sub-albums nested under this album, with their tracks preloaded
+    my $children = $c->pg->db->query(
+        q{SELECT a.id, a.title, a.year, a.cover_path, a.parent_id,
+                 (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS track_count,
+                 (SELECT COALESCE(SUM(t.duration_ms), 0)
+                    FROM tracks t WHERE t.album_id = a.id) AS duration_ms
+            FROM albums a
+           WHERE a.parent_id = ?
+           ORDER BY a.year NULLS LAST, a.title},
+        $id,
+    )->hashes->to_array;
+
+    for my $child (@$children) {
+        my $child_tracks = $c->pg->db->query(
+            q{SELECT id, title, track_number, disc_number,
+                     duration_ms, bitrate, sample_rate, channels, codec,
+                     album_id, artist_id
+                FROM tracks
+               WHERE album_id = ?
+               ORDER BY disc_number NULLS FIRST, track_number NULLS FIRST, title},
+            $child->{id},
+        )->hashes->to_array;
+
+        for my $t (@$child_tracks) {
+            $t->{album_title} = $child->{title};
+            $t->{artist_name} = $album->{artist_name};
+        }
+
+        $child->{tracks} = $child_tracks;
+    }
+
+    $c->render(json => {
+        album    => $album,
+        tracks   => $tracks,
+        children => $children,
+    });
 }
 
 # ── tracks ───────────────────────────────────────────────
@@ -160,7 +206,6 @@ sub track_detail ($c) {
     return $c->render(status => 404, json => { error => 'track_not_found' })
         unless $track;
 
-    # Do NOT leak the raw filesystem path to clients
     delete $track->{path};
 
     $c->render(json => { track => $track });

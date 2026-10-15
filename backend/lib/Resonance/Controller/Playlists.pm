@@ -22,7 +22,9 @@ sub _load_visible ($c, $id) {
 
 sub _track_count ($c, $playlist_id) {
     return $c->pg->db->query(
-        'SELECT count(*) AS n FROM playlist_tracks WHERE playlist_id = ?',
+        q{SELECT count(*) AS n FROM playlist_tracks pt
+           JOIN tracks t ON t.id = pt.track_id
+          WHERE pt.playlist_id = ? AND t.missing_at IS NULL},
         $playlist_id,
     )->hash->{n} + 0;
 }
@@ -60,7 +62,7 @@ sub show ($c) {
             JOIN tracks t   ON t.id  = pt.track_id
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
-           WHERE pt.playlist_id = ?
+           WHERE pt.playlist_id = ? AND t.missing_at IS NULL
            ORDER BY pt.position},
         $id,
     )->hashes->to_array;
@@ -140,7 +142,7 @@ sub add_track ($c) {
         unless defined $tid && $tid =~ /^\d+$/;
 
     my $track_ok = $c->pg->db->query(
-        'SELECT 1 FROM tracks WHERE id = ?', $tid,
+        'SELECT 1 FROM tracks WHERE id = ? AND missing_at IS NULL', $tid,
     )->array;
     return $c->render(status => 404, json => { error => 'track_not_found' })
         unless $track_ok;

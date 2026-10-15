@@ -12,6 +12,7 @@ sub list ($c) {
             LEFT JOIN albums  al ON al.id = t.album_id
             LEFT JOIN artists ar ON ar.id = t.artist_id
            WHERE f.user_id = ?
+             AND t.missing_at IS NULL
            ORDER BY f.created_at DESC},
         $c->stash('current_user_id'),
     )->hashes->to_array;
@@ -23,7 +24,9 @@ sub ids ($c) {
     # Lightweight list of favorited track ids — used by the frontend
     # to mark hearts without fetching full track rows.
     my $rows = $c->pg->db->query(
-        'SELECT track_id FROM favorites WHERE user_id = ?',
+        q{SELECT f.track_id FROM favorites f
+           JOIN tracks t ON t.id = f.track_id
+          WHERE f.user_id = ? AND t.missing_at IS NULL},
         $c->stash('current_user_id'),
     )->arrays->map(sub { 0 + $_->[0] })->to_array;
 

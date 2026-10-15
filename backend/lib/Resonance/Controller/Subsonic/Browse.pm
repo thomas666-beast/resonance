@@ -24,22 +24,66 @@ sub _clamp ($v, $min, $max) {
     return 0 + $v;
 }
 
+# Inject "AND t.missing_at IS NULL" into a caller-supplied WHERE clause.
+# Handles four shapes:
+#   ""                                  → adds a WHERE
+#   "WHERE expr"                        → wraps expr in parens
+#   "JOIN ... WHERE expr"               → keeps prefix, wraps expr
+#   "JOIN ..."                          → appends a WHERE
+# Parenthesizing is important: callers may use OR at the top level.
+sub _inject_active_track_filter ($where) {
+    my $clause = $where // '';
+
+    if ($clause =~ /\S/) {
+        if ($clause =~ /\bWHERE\b\s*(.+)$/is) {
+            my $prefix = $`;
+            my $expr   = $1;
+            return "$prefix WHERE ($expr) AND t.missing_at IS NULL";
+        }
+        return "$clause WHERE t.missing_at IS NULL";
+    }
+    return 'WHERE t.missing_at IS NULL';
+}
+
+# Same as above but for the album-level EXISTS guard, keyed on a.id
+sub _inject_active_album_filter ($where) {
+    my $clause = $where // '';
+    my $guard  = 'EXISTS (SELECT 1 FROM tracks t '
+               . 'WHERE t.album_id = a.id AND t.missing_at IS NULL)';
+
+    if ($clause =~ /\S/) {
+        if ($clause =~ /\bWHERE\b\s*(.+)$/is) {
+            my $prefix = $`;
+            my $expr   = $1;
+            return "$prefix WHERE ($expr) AND $guard";
+        }
+        return "$clause WHERE $guard";
+    }
+    return "WHERE $guard";
+}
+
 sub _album_rows ($db, $where = '', $order = '', @args) {
+    my $clause = _inject_active_album_filter($where);
+
     return $db->query(
         qq{SELECT a.id, a.title, a.year, a.artist_id, ar.name AS artist_name,
                   a.created_at,
-                  (SELECT count(*) FROM tracks t WHERE t.album_id = a.id) AS song_count,
+                  (SELECT count(*) FROM tracks t
+                    WHERE t.album_id = a.id AND t.missing_at IS NULL) AS song_count,
                   (SELECT COALESCE(SUM(duration_ms), 0) / 1000
-                     FROM tracks t WHERE t.album_id = a.id) AS duration_sec
+                     FROM tracks t
+                    WHERE t.album_id = a.id AND t.missing_at IS NULL) AS duration_sec
              FROM albums a
              LEFT JOIN artists ar ON ar.id = a.artist_id
-             $where
+             $clause
              $order},
         @args,
     )->hashes->to_array;
 }
 
 sub _song_rows ($db, $where = '', $order = '', @args) {
+    my $clause = _inject_active_track_filter($where);
+
     return $db->query(
         qq{SELECT t.id, t.title, t.track_number, t.disc_number,
                   t.duration_ms, t.bitrate, t.path, t.file_size,
@@ -49,7 +93,7 @@ sub _song_rows ($db, $where = '', $order = '', @args) {
              FROM tracks t
              LEFT JOIN albums  al ON al.id = t.album_id
              LEFT JOIN artists ar ON ar.id = t.artist_id
-             $where
+             $clause
              $order},
         @args,
     )->hashes->to_array;
@@ -59,8 +103,13 @@ sub _song_rows ($db, $where = '', $order = '', @args) {
 
 sub get_indexes ($c) {
     my $artists = $c->pg->db->query(
-        q{SELECT id, name, sort_name FROM artists
-           ORDER BY COALESCE(sort_name, name)},
+        q{SELECT ar.id, ar.name, ar.sort_name
+            FROM artists ar
+           WHERE EXISTS (SELECT 1 FROM tracks t
+                          JOIN albums  al ON al.id = t.album_id
+                         WHERE al.artist_id = ar.id
+                           AND t.missing_at IS NULL)
+           ORDER BY COALESCE(ar.sort_name, ar.name)},
     )->hashes->to_array;
 
     $c->render(json => subsonic_response(format_indexes($artists)));
@@ -69,15 +118,26 @@ sub get_indexes ($c) {
 sub get_artists ($c) {
     my $artists = $c->pg->db->query(
         q{SELECT ar.id, ar.name, ar.sort_name,
-                 (SELECT count(*) FROM albums al WHERE al.artist_id = ar.id) AS album_count,
-                 (SELECT MIN(al.id) FROM albums al WHERE al.artist_id = ar.id) AS cover_album_id
+                 (SELECT count(*) FROM albums al
+                   WHERE al.artist_id = ar.id
+                     AND EXISTS (SELECT 1 FROM tracks t
+                                  WHERE t.album_id = al.id
+                                    AND t.missing_at IS NULL)) AS album_count,
+                 (SELECT MIN(al.id) FROM albums al
+                   WHERE al.artist_id = ar.id
+                     AND EXISTS (SELECT 1 FROM tracks t
+                                  WHERE t.album_id = al.id
+                                    AND t.missing_at IS NULL)) AS cover_album_id
             FROM artists ar
+           WHERE EXISTS (SELECT 1 FROM tracks t
+                          JOIN albums  al ON al.id = t.album_id
+                         WHERE al.artist_id = ar.id
+                           AND t.missing_at IS NULL)
            ORDER BY COALESCE(ar.sort_name, ar.name)},
     )->hashes->to_array;
 
     my @formatted = map { format_artist($_) } @$artists;
 
-    # Group by first letter for the modern getArtists shape
     my %by_letter;
     for my $i (0 .. $#$artists) {
         my $first = uc substr($artists->[$i]{sort_name} // $artists->[$i]{name} // '?', 0, 1);
@@ -112,7 +172,10 @@ sub get_artist ($c) {
     return $c->render(json => subsonic_error(70, 'Artist not found'))
         unless $artist;
 
-    my $albums = _album_rows($c->pg->db, 'WHERE a.artist_id = ?', 'ORDER BY a.year NULLS LAST, a.title', $id);
+    my $albums = _album_rows(
+        $c->pg->db, 'WHERE a.artist_id = ?',
+        'ORDER BY a.year NULLS LAST, a.title', $id,
+    );
 
     $c->render(json => subsonic_response({
         artist => {
@@ -166,7 +229,6 @@ sub _album_list ($c, $wrapper) {
         $order = 'ORDER BY a.updated_at DESC NULLS LAST, a.id DESC';
     }
     elsif ($type eq 'frequent') {
-        # Not tracking play count per album yet; fall back to newest
         $order = 'ORDER BY a.created_at DESC NULLS LAST, a.id DESC';
     }
     elsif ($type eq 'alphabeticalByName') {
@@ -187,7 +249,6 @@ sub _album_list ($c, $wrapper) {
         $order = 'ORDER BY a.year DESC NULLS LAST, a.title';
     }
     elsif ($type eq 'starred') {
-        # Implemented in 13b-3
         return $c->render(json => subsonic_response({ $wrapper => { album => [] } }));
     }
     else {
@@ -226,18 +287,11 @@ sub get_random_songs ($c) {
     my $size = _clamp($c->param('size'), 1, 500);
     $size = 50 unless defined $c->param('size');
 
-    my ($where, @args) = ('', ());
-    my $genre = $c->param('genre');
-
-    if (defined($genre) && length $genre) {
-        # Genre filtering arrives with a join in 13b-3; return random for now
-    }
-
     my $songs = _song_rows(
         $c->pg->db,
-        $where,
+        '',
         'ORDER BY random() LIMIT ?',
-        @args, $size,
+        $size,
     );
 
     $c->render(json => subsonic_response({
@@ -248,7 +302,6 @@ sub get_random_songs ($c) {
 }
 
 sub get_songs_by_genre ($c) {
-    # Genre indexing not built yet — return empty
     $c->render(json => subsonic_response({
         songsByGenre => { song => [] },
     }));
@@ -302,11 +355,16 @@ sub search3 ($c) {
     my ($artists, $albums, $songs) = ([], [], []);
 
     if (!length $q) {
-        # Empty query = random picks per spec
         $artists = $db->query(
-            'SELECT id, name FROM artists ORDER BY random() LIMIT ?',
+            q{SELECT id, name FROM artists
+               WHERE EXISTS (SELECT 1 FROM tracks t
+                              JOIN albums  al ON al.id = t.album_id
+                             WHERE al.artist_id = artists.id
+                               AND t.missing_at IS NULL)
+               ORDER BY random() LIMIT ?},
             $artist_count,
         )->hashes->to_array;
+
         $albums = _album_rows($db, '', 'ORDER BY random() LIMIT ?', $album_count);
         $songs  = _song_rows($db, '', 'ORDER BY random() LIMIT ?', $song_count);
     }
@@ -316,6 +374,10 @@ sub search3 ($c) {
         $artists = $db->query(
             q{SELECT id, name FROM artists
                WHERE name ILIKE ?
+                 AND EXISTS (SELECT 1 FROM tracks t
+                              JOIN albums  al ON al.id = t.album_id
+                             WHERE al.artist_id = artists.id
+                               AND t.missing_at IS NULL)
                ORDER BY similarity(lower(name), lower(?)) DESC NULLS LAST, name
                LIMIT ?},
             $like, $q, $artist_count,

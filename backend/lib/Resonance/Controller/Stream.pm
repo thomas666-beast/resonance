@@ -10,7 +10,7 @@ sub stream ($c) {
         unless $id =~ /^\d+$/;
 
     my $track = $c->pg->db->query(
-        'SELECT id, path, mime_type FROM tracks WHERE id = ?',
+        'SELECT id, path, mime_type FROM tracks WHERE id = ? AND missing_at IS NULL',
         $id,
     )->hash;
 
