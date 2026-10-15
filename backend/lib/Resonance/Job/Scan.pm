@@ -3,17 +3,16 @@ use Mojo::Base -strict, -signatures;
 
 use File::Find::Rule;
 use Audio::Scan;
-use Resonance::Scan::Normalizer qw(normalize_tags normalize_info);
 use Mojo::File qw(path);
-use Digest::SHA qw/sha256_hex/;
+use Resonance::Scan::Normalizer qw(normalize_tags normalize_info);
 
 # Our v1 supported extensions
 my @EXTENSIONS = qw(*.flac *.mp3 *.m4a *.ogg *.opus);
 
 sub register ($minion) {
     $minion->add_task(scan => sub ($job, $scan_path_id) {
-        my $app = $job->app;
-        my $pg  = $app->pg;
+        my $app   = $job->app;
+        my $pg    = $app->pg;
         my $redis = $app->redis;
 
         my $scan_path = $pg->db->query(
@@ -42,15 +41,19 @@ sub register ($minion) {
 
         $job->note(total => $total);
         $redis->pubsub->notify('resonance:scan', {
-            event => 'started',
+            event        => 'started',
             scan_path_id => $scan_path_id,
-            total => $total,
+            total        => $total,
         });
 
         my $processed = 0;
         my $inserted  = 0;
         my $updated   = 0;
         my $failed    = 0;
+
+        # Track which paths we saw, so reconciliation can diff
+        my %seen;
+        for my $file (@files) { $seen{$file} = 1 }
 
         for my $file (@files) {
             my $result = eval { _process_file($app, $file, $scan_path_id) };
@@ -63,17 +66,25 @@ sub register ($minion) {
 
             $processed++;
 
-            # Progress every 50 files
             if ($processed % 50 == 0) {
                 $job->note(processed => $processed);
                 $redis->pubsub->notify('resonance:scan', {
-                    event => 'progress',
+                    event        => 'progress',
                     scan_path_id => $scan_path_id,
-                    processed => $processed,
-                    total => $total,
+                    processed    => $processed,
+                    total        => $total,
                 });
             }
         }
+
+        # ── reconciliation phase ────────────────────────
+        # Publish a phase-change so the UI can switch labels.
+        $redis->pubsub->notify('resonance:scan', {
+            event        => 'reconciling',
+            scan_path_id => $scan_path_id,
+        });
+
+        my ($missing, $restored) = _reconcile($app, $root, \%seen);
 
         $pg->db->query(
             'UPDATE scan_paths SET last_scan_at = now() WHERE id = ?',
@@ -81,22 +92,87 @@ sub register ($minion) {
         );
 
         $redis->pubsub->notify('resonance:scan', {
-            event => 'finished',
+            event        => 'finished',
             scan_path_id => $scan_path_id,
-            total => $total,
-            inserted => $inserted,
-            updated => $updated,
-            failed => $failed,
+            total        => $total,
+            inserted     => $inserted,
+            updated      => $updated,
+            failed       => $failed,
+            missing      => $missing,
+            restored     => $restored,
         });
 
         $job->finish({
-            total => $total,
-            inserted => $inserted,
-            updated => $updated,
-            failed => $failed,
+            total     => $total,
+            inserted  => $inserted,
+            updated   => $updated,
+            failed    => $failed,
+            missing   => $missing,
+            restored  => $restored,
         });
     });
 }
+
+# ── reconciliation ───────────────────────────────────────
+
+sub _reconcile ($app, $root, $seen) {
+    my $db = $app->pg->db;
+
+    # Range scan on path uses the B-tree index:
+    #   path >= 'root/' AND path < 'root0'
+    # where 'root0' is the next string after 'root/' in lexicographic order.
+    my $prefix = $root;
+    $prefix =~ s{/$}{};
+    $prefix .= '/';
+    my $upper = $prefix;
+    $upper =~ s{/$}{0};
+
+    # Tracks in DB under this root that are currently NOT missing
+    my $in_db = $db->query(
+        q{SELECT id, path FROM tracks
+           WHERE path >= ? AND path < ?
+             AND missing_at IS NULL},
+        $prefix, $upper,
+    )->hashes->to_array;
+
+    # Tracks in DB under this root that ARE currently marked missing
+    my $in_db_missing = $db->query(
+        q{SELECT id, path FROM tracks
+           WHERE path >= ? AND path < ?
+             AND missing_at IS NOT NULL},
+        $prefix, $upper,
+    )->hashes->to_array;
+
+    my @now_missing;
+    for my $row (@$in_db) {
+        push @now_missing, $row->{id} unless $seen->{ $row->{path} };
+    }
+
+    my @now_present;
+    for my $row (@$in_db_missing) {
+        push @now_present, $row->{id} if $seen->{ $row->{path} };
+    }
+
+    if (@now_missing) {
+        $db->query(
+            'UPDATE tracks SET missing_at = now() WHERE id = ANY(?)',
+            \@now_missing,
+        );
+        $app->log->info("Reconcile: marked " . scalar(@now_missing) . " tracks as missing");
+    }
+
+    if (@now_present) {
+        $db->query(
+            'UPDATE tracks SET missing_at = NULL WHERE id = ANY(?)',
+            \@now_present,
+        );
+        $app->log->info("Reconcile: restored " . scalar(@now_present) . " tracks");
+    }
+
+    return (scalar @now_missing, scalar @now_present);
+}
+
+# ── file processing (unchanged) ──────────────────────────
 
 sub _process_file ($app, $file, $scan_path_id) {
     my $raw = Audio::Scan->scan($file);
@@ -145,7 +221,6 @@ sub _process_file ($app, $file, $scan_path_id) {
 
     if ($album_id) {
         eval { _ensure_album_cover($app, $album_id, $raw, $file) };
-        # silently ignore cover errors — a scan shouldn't fail over art
     }
 
     # Upsert track
@@ -159,7 +234,7 @@ sub _process_file ($app, $file, $scan_path_id) {
             q{UPDATE tracks SET title = ?, album_id = ?, artist_id = ?,
               track_number = ?, disc_number = ?, duration_ms = ?,
               bitrate = ?, sample_rate = ?, channels = ?,
-              mime_type = ?, updated_at = now()
+              mime_type = ?, missing_at = NULL, updated_at = now()
               WHERE id = ?},
             $title, $album_id, $artist_id,
             $tags->{track_number}, $tags->{disc_number}, $info->{duration_ms},
@@ -200,16 +275,11 @@ sub _cover_cache_dir ($app) {
 }
 
 sub _extract_embedded_cover ($raw) {
-    # ID3v2 (MP3, AIFF, WAV) — APIC is a 4-element array:
-    #   [ mime_type, picture_type, description, binary_data ]
-    # Confirmed on the test library: [3] is the JPEG bytes.
     if (my $apic = $raw->{tags}{APIC}) {
         my $arr = ref $apic eq 'ARRAY' ? $apic : [$apic];
-        # Standard ID3v2.4 shape
         if (@$arr >= 4 && defined $arr->[3] && !ref $arr->[3]) {
             return $arr->[3];
         }
-        # Older/alternate shape: hashref with 'data'
         for my $entry (@$arr) {
             if (ref $entry eq 'HASH' && defined $entry->{data}) {
                 return $entry->{data};
@@ -217,7 +287,6 @@ sub _extract_embedded_cover ($raw) {
         }
     }
 
-    # FLAC/Ogg/Opus — PICTURE in info block
     if (my $pic = $raw->{info}{PICTURE}) {
         my $arr = ref $pic eq 'ARRAY' ? $pic : [$pic];
         for my $entry (@$arr) {
@@ -228,7 +297,6 @@ sub _extract_embedded_cover ($raw) {
         }
     }
 
-    # MP4/M4A — COVR is plain binary data
     if (my $covr = $raw->{tags}{COVR}) {
         my $data = ref $covr eq 'ARRAY' ? $covr->[0] : $covr;
         return $data if defined $data && !ref $data;
@@ -247,7 +315,6 @@ sub _find_folder_cover ($file) {
 }
 
 sub _ensure_album_cover ($app, $album_id, $raw, $file) {
-    # Already cached?
     my $existing = $app->pg->db->query(
         'SELECT cover_path FROM albums WHERE id = ?', $album_id,
     )->hash->{cover_path};
@@ -255,8 +322,7 @@ sub _ensure_album_cover ($app, $album_id, $raw, $file) {
 
     my $dir = _cover_cache_dir($app);
 
-    # Try embedded first
-    my $bytes = eval { _extract_embedded_cover($raw) };
+    my $bytes = _extract_embedded_cover($raw);
     if (defined $bytes && length $bytes) {
         my $out = "$dir/$album_id.jpg";
         path($out)->spurt($bytes);
@@ -267,7 +333,6 @@ sub _ensure_album_cover ($app, $album_id, $raw, $file) {
         return;
     }
 
-    # Fall back to folder image
     my $src = _find_folder_cover($file);
     if ($src) {
         my $out = "$dir/$album_id.jpg";
