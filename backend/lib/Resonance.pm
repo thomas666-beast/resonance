@@ -1,9 +1,6 @@
 package Resonance;
 use Mojo::Base 'Mojolicious', -signatures;
 
-# ---------------------------------------------------------------------------
-# Dependencies
-# ---------------------------------------------------------------------------
 use Dotenv;
 use Cwd            qw(abs_path);
 use File::Basename qw(dirname);
@@ -13,10 +10,6 @@ use Mojo::Redis;
 
 our $VERSION = '0.01';
 
-
-# ===========================================================================
-# Application startup
-# ===========================================================================
 sub startup ($self) {
     $self->_load_env;
     $self->_configure;
@@ -26,13 +19,6 @@ sub startup ($self) {
     $self->_register_routes;
 }
 
-
-# ===========================================================================
-# Environment
-# ===========================================================================
-
-# Walk up from this file's directory looking for a .env file.
-# Works no matter how the app is invoked (bin/resonance, -e one-liner, worker).
 sub _find_env_file {
     my $dir = abs_path(dirname(__FILE__));
     for (1 .. 6) {
@@ -50,10 +36,6 @@ sub _load_env ($self) {
     Dotenv->load($env_file) if $env_file && -e $env_file;
 }
 
-
-# ===========================================================================
-# Configuration
-# ===========================================================================
 sub _configure ($self) {
     $self->plugin('Config' => {
         default => {
@@ -69,8 +51,8 @@ sub _configure ($self) {
             },
             jwt => {
                 secret      => $ENV{JWT_SECRET}      // die "JWT_SECRET required\n",
-                access_ttl  => $ENV{JWT_ACCESS_TTL}  // 900,
-                refresh_ttl => $ENV{JWT_REFRESH_TTL} // 2592000,
+                access_ttl  => ($ENV{JWT_ACCESS_TTL}  // 900)       + 0,
+                refresh_ttl => ($ENV{JWT_REFRESH_TTL} // 2_592_000) + 0,
             },
         },
     });
@@ -82,18 +64,10 @@ sub _configure ($self) {
     $self->config->{transcode_cache_dir} = $ENV{TRANSCODE_CACHE_DIR} // 'data/transcodes';
 }
 
-
-# ===========================================================================
-# Logging
-# ===========================================================================
 sub _setup_logging ($self) {
     $self->log->level($self->config->{log_level});
 }
 
-
-# ===========================================================================
-# Helpers (shared connections)
-# ===========================================================================
 sub _register_helpers ($self) {
     $self->helper(pg => sub ($c) {
         state $pg = Mojo::Pg->new($c->config->{pg}{dsn});
@@ -106,10 +80,6 @@ sub _register_helpers ($self) {
     });
 }
 
-
-# ===========================================================================
-# Plugins
-# ===========================================================================
 sub _register_plugins ($self) {
     $self->plugin('Resonance::Plugin::Admin');
     $self->plugin('Resonance::Plugin::Auth');
@@ -123,21 +93,14 @@ sub _register_plugins ($self) {
     $self->plugin('SecurityHeader');
 }
 
-
-# ===========================================================================
-# Routes
-# ===========================================================================
 sub _register_routes ($self) {
     my $r = $self->routes;
 
-    # Subsonic protocol (mounted at /rest/* for client compatibility)
     $self->_routes_subsonic($r);
 
-    # Public API
     my $api = $r->under('/api')->to('Base#api_headers');
     $self->_routes_public($api);
 
-    # Authenticated API
     my $authed = $api->auth_required;
     $self->_routes_account($authed);
     $self->_routes_scan($authed);
@@ -148,12 +111,10 @@ sub _register_routes ($self) {
     $self->_routes_admin($authed);
 }
 
-# --- Subsonic ---------------------------------------------------------------
 sub _routes_subsonic ($self, $r) {
     $r->any('/rest/:method')->to('Subsonic#dispatch');
 }
 
-# --- Public (no auth) -------------------------------------------------------
 sub _routes_public ($self, $api) {
     $api->get ('/health')        ->to('Health#check');
     $api->post('/auth/register') ->to('Auth#register');
@@ -161,7 +122,6 @@ sub _routes_public ($self, $api) {
     $api->post('/auth/refresh')  ->to('Auth#refresh');
 }
 
-# --- Auth / current user ----------------------------------------------------
 sub _routes_account ($self, $authed) {
     $authed->post  ('/auth/logout')      ->to('Auth#logout');
     $authed->get   ('/auth/me')          ->to('Me#show');
@@ -173,7 +133,6 @@ sub _routes_account ($self, $authed) {
     $authed->get ('/me/subsonic')          ->to('Me#subsonic_status');
 }
 
-# --- Scanning ---------------------------------------------------------------
 sub _routes_scan ($self, $authed) {
     $authed->get ('/scan/active')   ->to('Scan#active');
     $authed->get ('/scan/jobs/:id') ->to('Scan#show');
@@ -181,7 +140,6 @@ sub _routes_scan ($self, $authed) {
     $authed->get ('/ws')            ->to('Scan#ws');
 }
 
-# --- Library & streaming ----------------------------------------------------
 sub _routes_library ($self, $authed) {
     $authed->get('/artists')           ->to('Library#artists');
     $authed->get('/artists/:id')       ->to('Library#artist_detail');
@@ -193,7 +151,6 @@ sub _routes_library ($self, $authed) {
     $authed->get('/search')            ->to('Search#search');
 }
 
-# --- Favorites --------------------------------------------------------------
 sub _routes_favorites ($self, $authed) {
     $authed->get   ('/favorites')            ->to('Favorites#list');
     $authed->get   ('/favorites/ids')        ->to('Favorites#ids');
@@ -201,7 +158,6 @@ sub _routes_favorites ($self, $authed) {
     $authed->delete('/favorites/:track_id')  ->to('Favorites#remove');
 }
 
-# --- Playlists --------------------------------------------------------------
 sub _routes_playlists ($self, $authed) {
     $authed->get   ('/playlists')                       ->to('Playlists#list');
     $authed->post  ('/playlists')                       ->to('Playlists#create');
@@ -213,21 +169,20 @@ sub _routes_playlists ($self, $authed) {
     $authed->patch ('/playlists/:id/reorder')           ->to('Playlists#reorder');
 }
 
-# --- Home & play history ----------------------------------------------------
 sub _routes_home ($self, $authed) {
     $authed->get ('/home')             ->to('Home#index');
     $authed->post('/plays/:track_id')  ->to('Plays#log_play');
 }
 
-# --- Admin ------------------------------------------------------------------
 sub _routes_admin ($self, $authed) {
-    $authed->get   ('/admin/users')      ->to('Admin#list_users');
-    $authed->post  ('/admin/users')      ->to('Admin#create_user');
-    $authed->patch ('/admin/users/:id')  ->to('Admin#update_user');
-    $authed->delete('/admin/users/:id')  ->to('Admin#delete_user');
-    $authed->get   ('/admin/stats')      ->to('Admin#stats');
-    $authed->get   ('/admin/transcode')  ->to('Admin#transcode_stats');
-    $authed->delete('/admin/transcode')  ->to('Admin#transcode_clear');
+    my $admin = $authed->admin_required;
+    $admin->get   ('/admin/users')      ->to('Admin#list_users');
+    $admin->post  ('/admin/users')      ->to('Admin#create_user');
+    $admin->patch ('/admin/users/:id')  ->to('Admin#update_user');
+    $admin->delete('/admin/users/:id')  ->to('Admin#delete_user');
+    $admin->get   ('/admin/stats')      ->to('Admin#stats');
+    $admin->get   ('/admin/transcode')  ->to('Admin#transcode_stats');
+    $admin->delete('/admin/transcode')  ->to('Admin#transcode_clear');
 }
 
 1;

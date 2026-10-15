@@ -13,24 +13,27 @@ use Mojo::File qw(path);
 use IPC::Open3;
 use Symbol qw(gensym);
 use File::Spec;
+use File::Find::Rule;
 
-# Supported targets: format => { ext, mime, codec, extra_args }
 my %FORMATS = (
     mp3 => {
         ext   => 'mp3',
         mime  => 'audio/mpeg',
         codec => 'libmp3lame',
+        container => 'mp3',
     },
     opus => {
         ext   => 'opus',
         mime  => 'audio/ogg',
         codec => 'libopus',
+        container => 'ogg',
         extra => [ '-vbr', 'on', '-application', 'audio' ],
     },
     aac => {
         ext   => 'm4a',
         mime  => 'audio/mp4',
         codec => 'aac',
+        container => 'mp4',
     },
 );
 
@@ -50,8 +53,6 @@ sub ffmpeg_available () {
     return $checked;
 }
 
-# ── cache path ───────────────────────────────────────────
-
 sub _cache_dir ($app) {
     my $dir = $app->config->{transcode_cache_dir} // 'data/transcodes';
     path($dir)->make_path unless -d $dir;
@@ -60,18 +61,15 @@ sub _cache_dir ($app) {
 
 sub _cache_path ($app, $track_id, $mtime, $format, $bitrate) {
     my $dir = _cache_dir($app);
-    my $sub = path($dir)->child($track_id);
+    my $sub = path($dir)->child("$track_id");
     $sub->make_path unless -d $sub;
     my $mtime_hex = sprintf '%x', $mtime;
     my $ext = $FORMATS{$format}{ext};
     return $sub->child("${mtime_hex}-${format}-${bitrate}.${ext}")->to_string;
 }
 
-# ── ffmpeg invocation ────────────────────────────────────
-
 sub _run_ffmpeg ($input, $output, $format, $bitrate) {
-    my $spec  = $FORMATS{$format} or return 0;
-    my $null  = File::Spec->devnull;
+    my $spec = $FORMATS{$format} or return 0;
 
     my @cmd = (
         'ffmpeg',
@@ -83,6 +81,7 @@ sub _run_ffmpeg ($input, $output, $format, $bitrate) {
         '-c:a', $spec->{codec},
         '-b:a', "${bitrate}k",
         @{ $spec->{extra} // [] },
+        '-f', $spec->{container},
         $output,
     );
 
@@ -98,28 +97,20 @@ sub _run_ffmpeg ($input, $output, $format, $bitrate) {
     return $? == 0 && -s $output ? 1 : 0;
 }
 
-# ── public API ───────────────────────────────────────────
-
-# Returns the file path to serve: either the cached transcode or the original.
-# Never dies — falls back to the original on any error.
 sub transcode_or_original ($app, $track, $format, $bitrate) {
     my $original = $track->{path};
 
-    # No format requested → serve original
     return $original unless defined $format && length $format;
     return $original unless $FORMATS{$format};
 
-    # Normalize bitrate
     $bitrate = 192 unless defined $bitrate && $VALID_BITRATES{$bitrate};
 
-    # If the source is already the target format, don't transcode
     my $src_ext = $original =~ /\.([^.]+)$/ ? lc $1 : '';
     my $target_ext = $FORMATS{$format}{ext};
     if ($src_ext eq $target_ext || ($src_ext eq 'mp3' && $format eq 'mp3')) {
         return $original;
     }
 
-    # ffmpeg missing? serve original
     return $original unless ffmpeg_available();
 
     my $mtime = (stat $original)[9] or return $original;
@@ -129,8 +120,6 @@ sub transcode_or_original ($app, $track, $format, $bitrate) {
         return $cached;
     }
 
-    # Transcode. Write to a temp file first so a crashed ffmpeg doesn't
-    # leave a half-written file that we'd serve on the next request.
     my $tmp = "$cached.tmp.$$";
     my $ok = eval { _run_ffmpeg($original, $tmp, $format, $bitrate) };
 
@@ -148,15 +137,12 @@ sub transcode_or_original ($app, $track, $format, $bitrate) {
     return $cached;
 }
 
-# ── cache management (for admin) ────────────────────────
-
 sub transcode_cache_stats ($app) {
     my $dir = _cache_dir($app);
     my ($bytes, $files) = (0, 0);
 
-    my $iter = path($dir)->list_tree->each;
-    while (my $p = $iter->()) {
-        next unless -f $p;
+    my @paths = File::Find::Rule->file->in($dir);
+    for my $p (@paths) {
         $files++;
         $bytes += -s $p;
     }
@@ -171,11 +157,12 @@ sub transcode_cache_stats ($app) {
 sub clear_transcode_cache ($app) {
     my $dir = _cache_dir($app);
     my $removed = 0;
-    my $iter = path($dir)->list_tree->each;
-    while (my $p = $iter->()) {
-        next unless -f $p;
+
+    my @paths = File::Find::Rule->file->in($dir);
+    for my $p (@paths) {
         unlink $p and $removed++;
     }
+
     return $removed;
 }
 

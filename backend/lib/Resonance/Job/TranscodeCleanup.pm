@@ -1,7 +1,7 @@
 package Resonance::Job::TranscodeCleanup;
 use Mojo::Base -strict, -signatures;
 
-use Mojo::File qw(path);
+use File::Find::Rule;
 
 sub run ($app, $max_age_days = 30) {
     my $dir = $app->config->{transcode_cache_dir} // 'data/transcodes';
@@ -10,9 +10,8 @@ sub run ($app, $max_age_days = 30) {
     my $cutoff = time - ($max_age_days * 86400);
     my ($removed, $freed) = (0, 0);
 
-    my $iter = path($dir)->list_tree->each;
-    while (my $p = $iter->()) {
-        next unless -f $p;
+    my @paths = File::Find::Rule->file->in($dir);
+    for my $p (@paths) {
         my $mtime = (stat $p)[9] // 0;
         next if $mtime >= $cutoff;
         my $size = -s $p;
@@ -22,11 +21,15 @@ sub run ($app, $max_age_days = 30) {
         }
     }
 
-    # Remove now-empty per-track directories
-    my $dir_iter = path($dir)->list->each;
-    while (my $sub = $dir_iter->()) {
-        next unless -d $sub;
-        rmdir $sub->to_string;
+    # Remove empty per-track dirs
+    if (opendir(my $dh, $dir)) {
+        for my $entry (readdir $dh) {
+            next if $entry eq '.' || $entry eq '..';
+            my $sub = "$dir/$entry";
+            next unless -d $sub;
+            rmdir $sub;
+        }
+        closedir $dh;
     }
 
     return { removed => $removed, freed => $freed };

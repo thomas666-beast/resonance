@@ -17,12 +17,15 @@ sub stream ($c) {
     return $c->render(status => 404, json => { error => 'track_not_found' })
         unless $track;
 
+    # Pre-check file existence so we can return a JSON error, not plain text
+    return $c->render(status => 404, json => { error => 'file_missing' })
+        unless -f $track->{path};
+
     my $format  = $c->param('format');
     my $bitrate = $c->param('bitrate');
 
     my $serve_path = transcode_or_original($c->app, $track, $format, $bitrate);
 
-    # If we served a transcode, override the MIME type
     my $mime = $track->{mime_type};
     if (defined $format && $serve_path ne $track->{path}) {
         $mime = {

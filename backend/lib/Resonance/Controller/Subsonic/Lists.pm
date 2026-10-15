@@ -13,8 +13,6 @@ use Resonance::Subsonic::Format qw(
     id_for id_value format_song format_playlist
 );
 
-# ── helpers ──────────────────────────────────────────────
-
 sub _song_rows ($db, $where, $order, @args) {
     return $db->query(
         qq{SELECT t.id, t.title, t.track_number, t.disc_number,
@@ -107,8 +105,10 @@ sub create_playlist ($c) {
         $uid, $name, ($c->param('public') // '') eq 'true' ? 1 : 0,
     )->hash;
 
-    # songId can be sent multiple times
-    my @song_ids = grep { defined && length } $c->every_param('songId');
+    # Collect songId — works whether the client sends one or many
+    my @song_ids = @{ $c->every_param('songId') };
+    @song_ids = grep { defined && length } @song_ids;
+
     my $pos = 1;
     for my $opaque (@song_ids) {
         my $tid = id_value($opaque);
@@ -139,7 +139,6 @@ sub update_playlist ($c) {
     return $c->render(json => subsonic_error(50, 'Not authorized'))
         unless $pl && $pl->{user_id} == $uid;
 
-    # Rename / update comment / public
     my ($name, $comment, $public) = (
         $c->param('name'),
         $c->param('comment'),
@@ -157,8 +156,8 @@ sub update_playlist ($c) {
         $id,
     );
 
-    # Add songs
-    my @add_ids = grep { defined && length } $c->every_param('songIdToAdd');
+    my @add_ids = @{ $c->every_param('songIdToAdd') };
+    @add_ids = grep { defined && length } @add_ids;
     if (@add_ids) {
         my $next = $c->pg->db->query(
             'SELECT COALESCE(MAX(position), 0) + 1 AS p FROM playlist_tracks WHERE playlist_id = ?',
@@ -177,8 +176,8 @@ sub update_playlist ($c) {
         }
     }
 
-    # Remove songs by index (1-based per Subsonic spec)
-    my @remove_idx = grep { defined && /^\d+$/ } $c->every_param('songIndexToRemove');
+    my @remove_idx = @{ $c->every_param('songIndexToRemove') };
+    @remove_idx = grep { defined && /^\d+$/ } @remove_idx;
     if (@remove_idx) {
         my @ordered = $c->pg->db->query(
             'SELECT track_id FROM playlist_tracks WHERE playlist_id = ? ORDER BY position',
@@ -194,7 +193,6 @@ sub update_playlist ($c) {
             );
         }
 
-        # Compact positions
         my $pos = 1;
         for my $tid (@ordered) {
             next if $to_remove{ $pos - 1 };
@@ -236,14 +234,12 @@ sub _star_common ($c, $on) {
 
     my @track_ids;
 
-    # id=tr-N or id=N
     my $id = $c->param('id');
     if (defined $id && length $id) {
         my $tid = id_value($id);
-        push @track_ids, $tid if $tid && $id =~ /^tr-\d+$/ || $id =~ /^\d+$/;
+        push @track_ids, $tid if $tid;
     }
 
-    # albumId=al-N → star all tracks in album
     my $album_id = $c->param('albumId');
     if (defined $album_id && length $album_id) {
         my $aid = id_value($album_id);
@@ -255,7 +251,6 @@ sub _star_common ($c, $on) {
         }
     }
 
-    # artistId=ar-N → star all tracks by artist
     my $artist_id = $c->param('artistId');
     if (defined $artist_id && length $artist_id) {
         my $arid = id_value($artist_id);
@@ -309,7 +304,8 @@ sub get_starred2 ($c) {
 sub scrobble ($c) {
     my $uid = $c->stash('subsonic_user')->{id};
 
-    my @ids = grep { defined && length } $c->every_param('id');
+    my @ids = @{ $c->every_param('id') };
+    @ids = grep { defined && length } @ids;
     return $c->render(json => subsonic_response({})) unless @ids;
 
     my $submission = ($c->param('submission') // 'true') ne 'false';
@@ -353,7 +349,6 @@ sub get_scan_status ($c) {
 sub start_scan ($c) {
     my $uid = $c->stash('subsonic_user')->{id};
 
-    # Admin-only
     my $role = $c->pg->db->query('SELECT role FROM users WHERE id = ?', $uid)->hash;
     unless ($role && $role->{role} eq 'admin') {
         return $c->render(json => subsonic_error(50, 'Admin required'));
