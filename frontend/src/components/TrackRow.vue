@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usePlayerStore, type Track } from '@/stores/player'
 import FavoriteButton from './FavoriteButton.vue'
@@ -13,6 +14,8 @@ const props = defineProps<{
 }>()
 
 const player = usePlayerStore()
+
+const menuOpen = ref(false)
 
 function play() {
   player.playTrack(props.track, props.queue ?? [props.track])
@@ -33,8 +36,11 @@ function isCurrent(): boolean {
   <div
     @click="play"
     class="group flex items-center gap-4 px-3 py-2 rounded-lg cursor-pointer
-           hover-surface transition-colors"
-    :class="{ 'bg-surface-2': isCurrent() }"
+           hover:bg-surface-2 transition-colors relative"
+    :class="[
+      isCurrent() ? 'bg-surface-2' : '',
+      menuOpen ? 'z-30' : ''
+    ]"
   >
     <div class="w-6 text-right text-sm tabular"
          :class="isCurrent() ? 'text-accent font-semibold' : 'text-dim'">
@@ -63,7 +69,7 @@ function isCurrent(): boolean {
 
     <div class="flex items-center gap-1 text-muted group-hover:text-app transition-colors">
       <FavoriteButton :track-id="track.id" />
-      <AddToPlaylistMenu :track-id="track.id" />
+      <AddToPlaylistMenu :track-id="track.id" @open-change="menuOpen = $event" />
     </div>
 
     <div class="text-xs text-muted tabular w-12 text-right">
