@@ -6,7 +6,9 @@
     "libraryReady": "Your library is ready."
   },
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "nav": {
     "artists": "Artists",
@@ -15,7 +17,10 @@
     "playlists": "Playlists",
     "logout": "Logout",
     "language": "Language",
-    "admin": "Admin"
+    "admin": "Admin",
+    "home": "Home",
+    "menu": "Menu",
+    "theme": "Theme"
   },
   "auth": {
     "signIn": "Sign in",

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch, computed } from 'vue'
+import { onMounted, onUnmounted, watch, computed, ref } from 'vue'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { useScanStore } from '@/stores/scan'
 import { useFavoritesStore } from '@/stores/favorites'
 import { usePlaylistsStore } from '@/stores/playlists'
+import { usePlayerStore } from '@/stores/player'
 import { SUPPORTED_LOCALES } from '@/i18n'
 import { useKeyboard } from '@/composables/useKeyboard'
 import PlayerBar from '@/components/PlayerBar.vue'
@@ -14,7 +15,8 @@ import ScanProgress from '@/components/ScanProgress.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import ToastHost from '@/components/ToastHost.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
-import { usePlayerStore } from '@/stores/player'
+import MobileDrawer from '@/components/MobileDrawer.vue'
+import MobileSearchOverlay from '@/components/MobileSearchOverlay.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -23,10 +25,12 @@ const localeStore = useLocaleStore()
 const scan = useScanStore()
 const favorites = useFavoritesStore()
 const playlistsStore = usePlaylistsStore()
+const player = usePlayerStore()
 
 const isNowPlaying = computed(() => route.name === 'now-playing')
 
-const player = usePlayerStore()
+const drawerOpen = ref(false)
+const mobileSearchOpen = ref(false)
 
 useKeyboard()
 
@@ -49,6 +53,12 @@ watch(() => auth.accessToken, (t) => {
   }
 })
 
+// Auto-close the drawer when route changes
+watch(() => route.fullPath, () => {
+  drawerOpen.value = false
+  mobileSearchOpen.value = false
+})
+
 onUnmounted(() => scan.disconnect())
 
 async function logout() {
@@ -57,7 +67,6 @@ async function logout() {
   await auth.logout()
   router.push({ name: 'login' })
 }
-
 </script>
 
 <template>
@@ -66,7 +75,8 @@ async function logout() {
       v-if="auth.accessToken && !isNowPlaying"
       class="sticky top-0 z-20 border-b border-app bg-surface/90 backdrop-blur-sm"
     >
-      <div class="px-6 py-3 flex items-center gap-6 max-w-6xl mx-auto w-full">
+      <!-- Desktop header -->
+      <div class="hidden md:flex px-6 py-3 items-center gap-6 max-w-6xl mx-auto w-full">
         <RouterLink to="/" class="text-lg font-semibold tracking-tight shrink-0 text-app">
           {{ $t('app.title') }}
         </RouterLink>
@@ -95,7 +105,6 @@ async function logout() {
           <RouterLink to="/settings"
             class="p-1.5 rounded-full hover-surface transition-colors text-muted"
             :aria-label="$t('settings.title')"
-            :title="$t('settings.title')"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                  class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
@@ -104,7 +113,6 @@ async function logout() {
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </RouterLink>
-
           <ScanButton />
           <ThemeToggle />
           <select
@@ -121,6 +129,37 @@ async function logout() {
           </button>
         </div>
       </div>
+
+      <!-- Mobile header -->
+      <div class="flex md:hidden px-4 py-3 items-center gap-3">
+        <button
+          @click="drawerOpen = true"
+          class="p-2 rounded-full hover-surface transition-colors"
+          :aria-label="$t('nav.menu')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <RouterLink to="/" class="text-lg font-semibold tracking-tight text-app">
+          {{ $t('app.title') }}
+        </RouterLink>
+
+        <button
+          @click="mobileSearchOpen = true"
+          class="ml-auto p-2 rounded-full hover-surface transition-colors"
+          :aria-label="$t('search.placeholder')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </button>
+      </div>
     </header>
 
     <ScanProgress v-if="!isNowPlaying" />
@@ -135,5 +174,8 @@ async function logout() {
 
     <PlayerBar v-if="auth.accessToken && !isNowPlaying" />
     <ToastHost />
+
+    <MobileDrawer :open="drawerOpen" @close="drawerOpen = false" />
+    <MobileSearchOverlay :open="mobileSearchOpen" @close="mobileSearchOpen = false" />
   </div>
 </template>
