@@ -20,7 +20,8 @@
     "admin": "Admin",
     "home": "Home",
     "menu": "Menu",
-    "theme": "Theme"
+    "theme": "Theme",
+    "settings": "Settings"
   },
   "auth": {
     "signIn": "Sign in",
