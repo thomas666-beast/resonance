@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, onUnmounted, computed } from 'vue'
+import { watch, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import VueDraggable from 'vuedraggable'
 import { usePlayerStore, type Track } from '@/stores/player'
@@ -11,18 +11,27 @@ const emit = defineEmits<{ (e: 'close'): void }>()
 const { t } = useI18n()
 const player = usePlayerStore()
 
-// Local mirror for vuedraggable. On drag end we sync back to the store.
-const localUpcoming = computed({
-  get: () => player.upcoming,
-  set: (v: Track[]) => {
-    // The store's queue holds [played..., current, ...upcoming]
-    // so we splice the new upcoming list back in after the current index.
-    const head = player.queue.slice(0, player.index + 1)
-    player.queue = [...head, ...v]
-  },
-})
+// Local mutable copy of the upcoming list. vuedraggable mutates this in place.
+const upcoming = ref<Track[]>([])
 
-const localPlayed = computed(() => player.played)
+// Keep the local copy in sync with the store.
+// Recompute when: the queue changes, the index changes, the panel opens.
+function syncFromStore() {
+  upcoming.value = [...player.upcoming]
+}
+
+watch(
+  () => [player.index, player.queue.length, props.open] as const,
+  () => {
+    if (props.open) syncFromStore()
+  },
+  { immediate: true, deep: false },
+)
+
+// Also sync when the queue array identity changes (e.g. reorder from elsewhere)
+watch(() => player.queue, () => {
+  if (props.open) syncFromStore()
+})
 
 function fmt(ms: number | null | undefined): string {
   if (!ms) return '—'
@@ -32,10 +41,16 @@ function fmt(ms: number | null | undefined): string {
 
 function onDragEnd(evt: { oldIndex: number; newIndex: number }) {
   if (evt.oldIndex === evt.newIndex) return
+  if (evt.oldIndex == null || evt.newIndex == null) return
+
   // Convert upcoming-relative indices to queue-absolute indices
   const from = player.index + 1 + evt.oldIndex
   const to   = player.index + 1 + evt.newIndex
+
   player.move(from, to)
+
+  // Resync after the store has settled
+  syncFromStore()
 }
 
 function jumpToUpcoming(upcomingIndex: number) {
@@ -44,6 +59,7 @@ function jumpToUpcoming(upcomingIndex: number) {
 
 function removeUpcoming(upcomingIndex: number) {
   player.removeAt(player.index + 1 + upcomingIndex)
+  syncFromStore()
 }
 
 function onKey(e: KeyboardEvent) {
@@ -52,6 +68,7 @@ function onKey(e: KeyboardEvent) {
 
 watch(() => props.open, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
+  if (open) syncFromStore()
 })
 
 onUnmounted(() => {
@@ -96,12 +113,11 @@ document.addEventListener('keydown', onKey)
         aria-modal="true"
         :aria-label="t('queue.title')"
       >
-        <!-- Header -->
         <header class="px-5 py-4 border-b border-app flex items-center">
           <h2 class="text-heading">{{ $t('queue.title') }}</h2>
           <button
             v-if="player.upcoming.length"
-            @click="player.clearUpcoming()"
+            @click="player.clearUpcoming(); syncFromStore()"
             class="ml-auto mr-3 text-sm text-muted hover:text-danger transition-colors"
           >
             {{ $t('queue.clearUpcoming') }}
@@ -118,12 +134,10 @@ document.addEventListener('keydown', onKey)
           </button>
         </header>
 
-        <!-- Empty -->
         <div v-if="!player.current" class="flex-1 flex items-center justify-center text-muted text-sm px-6 text-center">
           {{ $t('queue.empty') }}
         </div>
 
-        <!-- Content -->
         <div v-else class="flex-1 overflow-y-auto scroll-slim px-5 py-4 space-y-8">
           <!-- Now playing -->
           <div>
@@ -143,14 +157,14 @@ document.addEventListener('keydown', onKey)
             </div>
           </div>
 
-          <!-- Played (collapsed info) -->
-          <div v-if="localPlayed.length">
+          <!-- Played -->
+          <div v-if="player.played.length">
             <div class="text-label mb-2">
-              {{ $t('queue.played') }} · {{ localPlayed.length }}
+              {{ $t('queue.played') }} · {{ player.played.length }}
             </div>
             <div class="space-y-0.5 opacity-60">
               <div
-                v-for="t in localPlayed.slice(-5)"
+                v-for="t in player.played.slice(-5)"
                 :key="`p-${t.id}`"
                 class="flex items-center gap-3 px-3 py-1.5 text-sm"
               >
@@ -163,16 +177,16 @@ document.addEventListener('keydown', onKey)
           <!-- Next up -->
           <div>
             <div class="text-label mb-2">
-              {{ $t('queue.nextUp') }} · {{ player.upcoming.length }}
+              {{ $t('queue.nextUp') }} · {{ upcoming.length }}
             </div>
 
-            <p v-if="!player.upcoming.length" class="text-sm text-muted">
+            <p v-if="!upcoming.length" class="text-sm text-muted">
               {{ $t('queue.noUpcoming') }}
             </p>
 
             <VueDraggable
               v-else
-              v-model="localUpcoming"
+              v-model="upcoming"
               item-key="id"
               handle=".drag-handle"
               :animation="150"
