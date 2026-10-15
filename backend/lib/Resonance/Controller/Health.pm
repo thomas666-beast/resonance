@@ -6,6 +6,11 @@ sub check ($c) {
         status  => 'ok',
         version => $Resonance::VERSION,
         time    => time(),
+        app     => {
+            name           => $c->config->{app_name},
+            copyright_year => $c->config->{copyright_year},
+            admin_contact  => $c->config->{admin_contact},
+        },
         services => {},
     );
 
@@ -13,8 +18,7 @@ sub check ($c) {
     my $pg_ok = 0;
     my $pg_err;
     eval {
-        my $db = $c->pg->db;
-        my $row = $db->query('SELECT 1 AS ok')->hash;
+        my $row = $c->pg->db->query('SELECT 1 AS ok')->hash;
         $pg_ok = ($row->{ok} // 0) == 1 ? 1 : 0;
         1;
     } or $pg_err = $@;
@@ -38,7 +42,6 @@ sub check ($c) {
         ($redis_err ? (error => "$redis_err") : ()),
     };
 
-    # Overall
     my $all_ok = $pg_ok && $redis_ok;
     $status{status} = $all_ok ? 'ok' : 'degraded';
 

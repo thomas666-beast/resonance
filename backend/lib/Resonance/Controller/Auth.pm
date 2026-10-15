@@ -112,7 +112,6 @@ sub login ($c) {
         $u,
     )->hash;
 
-    # Always verify, even when user is missing, to reduce timing leak
     my $hash = $user ? $user->{password_hash}
                      : hash_password('dummy-password-for-timing');
     my $ok = verify_password($hash, $p);
@@ -145,7 +144,6 @@ sub refresh ($c) {
 
     my $hash = hash_token($rt);
 
-    # Atomically: lock the row, revoke it, hand back the user_id
     my $row = eval {
         my $db  = $c->pg->db;
         my $tok = $db->query(
@@ -194,6 +192,78 @@ sub logout ($c) {
     }
 
     _clear_refresh_cookie($c);
+
+    $c->render(json => { ok => \1 });
+}
+
+sub change_password ($c) {
+    my $uid = $c->stash('current_user_id');
+    my $body = $c->req->json // {};
+
+    my ($current, $new) = ($body->{current_password}, $body->{new_password});
+
+    return $c->render(status => 400, json => { error => 'missing_fields' })
+        unless defined $current && defined $new && length $current && length $new;
+
+    return $c->render(status => 400, json => { error => 'password_too_short' })
+        unless length($new) >= 8;
+
+    return $c->render(status => 400, json => { error => 'password_unchanged' })
+        if $current eq $new;
+
+    my $user = $c->pg->db->query(
+        'SELECT id, password_hash FROM users WHERE id = ?',
+        $uid,
+    )->hash;
+
+    return $c->render(status => 404, json => { error => 'user_not_found' })
+        unless $user;
+
+    unless (verify_password($user->{password_hash}, $current)) {
+        return $c->render(status => 401, json => { error => 'invalid_password' });
+    }
+
+    my $hash = hash_password($new);
+
+    # Capture the current refresh token so we can keep this session alive
+    my $current_rt = $c->cookie('resonance_refresh');
+    my $current_hash = defined $current_rt && length $current_rt
+        ? hash_token($current_rt)
+        : undef;
+
+    my $db = $c->pg->db;
+    $db->query('BEGIN');
+    eval {
+        $db->query(
+            'UPDATE users SET password_hash = ?, updated_at = now() WHERE id = ?',
+            $hash, $uid,
+        );
+
+        # Revoke all other refresh tokens; keep the caller's current one
+        if ($current_hash) {
+            $db->query(
+                q{UPDATE refresh_tokens SET revoked_at = now()
+                   WHERE user_id = ?
+                     AND revoked_at IS NULL
+                     AND token_hash <> ?},
+                $uid, $current_hash,
+            );
+        }
+        else {
+            $db->query(
+                q{UPDATE refresh_tokens SET revoked_at = now()
+                   WHERE user_id = ? AND revoked_at IS NULL},
+                $uid,
+            );
+        }
+
+        $db->query('COMMIT');
+        1;
+    } or do {
+        my $err = $@;
+        $db->query('ROLLBACK');
+        return $c->render(status => 500, json => { error => 'update_failed' });
+    };
 
     $c->render(json => { ok => \1 });
 }

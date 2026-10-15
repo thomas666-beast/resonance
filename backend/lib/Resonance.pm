@@ -64,6 +64,10 @@ sub _configure ($self) {
     $self->config->{media_root}          = $ENV{MEDIA_ROOT};
     $self->config->{cover_cache_dir}     = $ENV{COVER_CACHE_DIR}     // 'data/covers';
     $self->config->{transcode_cache_dir} = $ENV{TRANSCODE_CACHE_DIR} // 'data/transcodes';
+
+    $self->config->{app_name}       = $ENV{APP_NAME}           // 'Resonance';
+    $self->config->{copyright_year} = (localtime)[5] + 1900;
+    $self->config->{admin_contact}  = $ENV{ADMIN_CONTACT}      // '';
 }
 
 sub _setup_logging ($self) {
@@ -170,6 +174,7 @@ sub _routes_account ($self, $authed) {
 
     $authed->post('/me/subsonic-password') ->to('Me#set_subsonic_password');
     $authed->get ('/me/subsonic')          ->to('Me#subsonic_status');
+    $authed->post('/auth/change-password') ->to('Auth#change_password');
 }
 
 sub _routes_scan ($self, $authed) {
