@@ -26,7 +26,7 @@ async function createNew() {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-5xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-5xl mx-auto text-app">
     <header class="flex items-center justify-between mb-8">
       <h1 class="text-3xl font-semibold tracking-tight">{{ $t('playlists.title') }}</h1>
       <button
@@ -46,7 +46,7 @@ async function createNew() {
       :description="$t('playlists.emptyDescription')"
     />
 
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <RouterLink
         v-for="p in playlists.items"
         :key="p.id"

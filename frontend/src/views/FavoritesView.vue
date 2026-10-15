@@ -26,7 +26,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-4xl mx-auto text-app">
     <h1 class="text-title mb-8">{{ $t('favorites.title') }}</h1>
 
     <SkeletonList v-if="loading" :count="8" />

@@ -36,7 +36,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-6xl mx-auto text-app">
     <h1 class="text-title mb-8">{{ $t('albums.title') }}</h1>
 
     <p v-if="error" class="text-danger">{{ error }}</p>
@@ -50,7 +50,7 @@ onMounted(async () => {
       :description="$t('albums.emptyDescription')"
     />
 
-    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
       <RouterLink
         v-for="(a, i) in albums"
         :key="a.id"

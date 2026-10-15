@@ -166,7 +166,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-6xl mx-auto text-app">
     <header class="flex items-center justify-between mb-10">
       <h1 class="text-display">{{ $t('admin.title') }}</h1>
       <button
@@ -179,7 +179,7 @@ onMounted(() => {
     </header>
 
     <!-- Stats -->
-    <section v-if="stats" class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-10">
+    <section v-if="stats" class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-10">
       <div v-for="(v, k) in stats.counts" :key="k"
            class="bg-surface border border-app rounded-xl p-4 anim-fade-slide">
         <div class="text-3xl font-semibold tabular">{{ v }}</div>
@@ -191,7 +191,7 @@ onMounted(() => {
     <section class="mb-10">
       <div class="flex items-center justify-between mb-4 gap-4">
         <h2 class="text-heading">{{ $t('admin.users') }}</h2>
-        <div class="relative max-w-xs flex-1">
+        <div class="relative flex-1 md:max-w-xs">
           <input
             type="search"
             :placeholder="$t('admin.searchPlaceholder')"

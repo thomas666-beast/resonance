@@ -81,7 +81,7 @@ async function toggleFavorite() {
       <p class="ml-auto text-label">{{ $t('nowPlaying.label') }}</p>
     </header>
 
-    <main class="flex flex-col items-center px-8 pb-16 max-w-2xl mx-auto">
+    <main class="flex flex-col items-center px-4 md:px-8 pb-16 max-w-2xl mx-auto">
       <div class="w-full max-w-md mt-4 mb-10 anim-scale-fade">
         <AlbumCover
           v-if="current.album_id"

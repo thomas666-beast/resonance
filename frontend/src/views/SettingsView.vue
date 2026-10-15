@@ -48,7 +48,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-2xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-2xl mx-auto text-app">
     <h1 class="text-display mb-8">{{ $t('settings.title') }}</h1>
 
     <section class="bg-surface border border-app rounded-xl p-6 anim-fade-slide">

@@ -32,7 +32,7 @@ watch(() => scan.lastResult, (r) => { if (r) load() })
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-4xl mx-auto text-app">
     <h1 class="text-title mb-6">{{ $t('artists.title') }}</h1>
 
     <p v-if="error" class="text-danger">{{ error }}</p>

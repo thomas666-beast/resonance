@@ -46,7 +46,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-6xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-6xl mx-auto text-app">
     <header class="mb-10">
       <h1 class="text-display">
         {{ $t('app.welcome', { name: auth.user?.username ?? $t('app.friend') }) }}

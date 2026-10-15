@@ -60,7 +60,7 @@ function playAll() {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-4xl mx-auto text-app">
     <p v-if="error" class="text-danger">{{ error }}</p>
 
     <div v-else-if="loading" class="space-y-6">

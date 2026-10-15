@@ -24,7 +24,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-4xl mx-auto text-app">
     <p v-if="loading" class="text-muted">{{ $t('common.loading') }}</p>
     <p v-else-if="error" class="text-danger">{{ error }}</p>
     <template v-else-if="artist">

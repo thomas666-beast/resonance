@@ -40,7 +40,7 @@ function playAll() {
 </script>
 
 <template>
-  <div class="p-8 pb-32 max-w-4xl mx-auto text-app">
+  <div class="p-4 md:p-8 pb-32 max-w-4xl mx-auto text-app">
     <p v-if="error" class="text-danger">{{ error }}</p>
 
     <div v-else-if="loading" class="space-y-6">
@@ -56,11 +56,11 @@ function playAll() {
     </div>
 
     <template v-else-if="album">
-      <header class="mb-10 flex flex-col sm:flex-row gap-6 anim-fade-slide">
+      <header class="mb-10 flex flex-col md:flex-row gap-6 anim-fade-slide">
         <AlbumCover
           :album-id="album.id"
           :rounded="false"
-          class="!w-48 !h-48 !rounded-xl shadow-2xl"
+          class="!w-full md:!w-48 !h-auto md:!h-48 aspect-square !rounded-xl shadow-2xl shrink-0"
         />
         <div class="flex flex-col justify-end">
           <p class="text-label mb-2">{{ $t('album.label') }}</p>
