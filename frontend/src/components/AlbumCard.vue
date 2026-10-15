@@ -19,7 +19,7 @@ defineProps<{
   >
     <div class="aspect-square rounded-xl overflow-hidden shadow-lg
                 group-hover:shadow-xl group-hover:-translate-y-1
-                transition-all duration-200 ease-out">
+                active:scale-[0.98] transition-all duration-200 ease-out">
       <AlbumCover :album-id="album.id" fill />
     </div>
     <div class="mt-3">

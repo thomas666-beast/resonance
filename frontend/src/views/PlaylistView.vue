@@ -110,7 +110,7 @@ function playAll() {
         <template #item="{ element: t, index: i }">
           <div class="flex items-center anim-fade-slide"
                :style="{ animationDelay: Math.min(i, 12) * 25 + 'ms' }">
-            <span class="drag-handle cursor-grab text-dim px-2 select-none">⋮⋮</span>
+            <span class="drag-handle cursor-grab text-dim px-3 py-2 md:py-0 select-none">⋮⋮</span>
             <div class="flex-1">
               <TrackRow :track="t" :queue="tracks" :index="i + 1" show-artist>
                 <template #actions>

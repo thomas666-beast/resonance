@@ -22,7 +22,7 @@ async function onClick(e: MouseEvent) {
     @click="onClick"
     :aria-label="filled ? 'Unfavorite' : 'Favorite'"
     :aria-pressed="filled"
-    class="p-1.5 rounded-full hover-surface transition-colors"
+    class="p-2 md:p-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors"
     :class="{ 'heart-pop': popping }"
   >
     <svg

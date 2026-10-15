@@ -83,19 +83,19 @@ async function logout() {
 
         <nav class="flex items-center gap-1 text-sm shrink-0">
           <RouterLink to="/artists"
-            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            class="px-3 py-2 md:py-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.artists') }}</RouterLink>
           <RouterLink to="/albums"
-            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            class="px-3 py-2 md:py-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.albums') }}</RouterLink>
           <RouterLink to="/favorites"
-            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            class="px-3 py-2 md:py-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.favorites') }}</RouterLink>
           <RouterLink to="/playlists"
-            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            class="px-3 py-2 md:py-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.playlists') }}</RouterLink>
           <RouterLink v-if="auth.isAdmin" to="/admin"
-            class="px-3 py-1.5 rounded-full hover-surface transition-colors"
+            class="px-3 py-2 md:py-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors"
             active-class="bg-surface-2 font-medium">{{ $t('nav.admin') }}</RouterLink>
         </nav>
 

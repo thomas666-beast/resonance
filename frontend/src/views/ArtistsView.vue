@@ -56,7 +56,7 @@ watch(() => scan.lastResult, (r) => { if (r) load() })
         :style="{ animationDelay: Math.min(i, 12) * 30 + 'ms' }"
       >
         <RouterLink :to="`/artists/${a.id}`"
-                    class="block px-3 py-2 rounded-lg hover-surface transition-colors">
+                    class="block px-3 py-3 md:py-2 rounded-lg hover-surface active:bg-surface-2 transition-colors">
           {{ a.name }}
         </RouterLink>
       </li>

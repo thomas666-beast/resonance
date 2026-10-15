@@ -25,7 +25,7 @@ function isCurrent(): boolean {
   >
     <div class="relative aspect-square rounded-xl overflow-hidden shadow-lg
                 group-hover:shadow-xl group-hover:-translate-y-1
-                transition-all duration-200 ease-out">
+                active:scale-[0.98] transition-all duration-200 ease-out">
       <AlbumCover v-if="track.album_id" :album-id="track.album_id" fill />
       <div v-else class="w-full h-full bg-surface-2 flex items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"

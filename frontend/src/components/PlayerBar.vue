@@ -64,7 +64,7 @@ function onVolumeInput(e: Event) {
       <div class="flex items-center gap-2">
         <button
           @click="player.prev()"
-          class="px-2 py-1 hover-surface rounded transition-colors"
+          class="p-2 text-muted active:text-app active:scale-95 transition-all"
           aria-label="Previous"
         >⏮</button>
         <button
@@ -76,7 +76,7 @@ function onVolumeInput(e: Event) {
         </button>
         <button
           @click="player.next()"
-          class="px-2 py-1 hover-surface rounded transition-colors"
+          class="p-2 text-muted active:text-app transition-colors"
           aria-label="Next"
         >⏭</button>
       </div>

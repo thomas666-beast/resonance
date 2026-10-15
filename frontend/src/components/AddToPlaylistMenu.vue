@@ -56,7 +56,7 @@ onUnmounted(() => document.removeEventListener('click', onDocClick))
   <div ref="root" class="relative">
     <button
       @click="toggle"
-      class="p-1.5 rounded-full hover-surface transition-colors text-muted"
+      class="p-2 md:p-1.5 rounded-full hover-surface active:bg-surface-2 transition-colors text-muted"
       :aria-label="$t('playlists.addTo')"
     >⋯</button>
 
@@ -72,7 +72,7 @@ onUnmounted(() => document.removeEventListener('click', onDocClick))
         v-for="p in playlists.items"
         :key="p.id"
         @click.stop="pick(p.id, p.name)"
-        class="block w-full text-left px-3 py-1.5 hover-surface truncate"
+        class="block w-full text-left px-3 py-2.5 md:py-1.5 hover-surface truncate"
       >
         {{ p.name }}
         <span class="text-dim text-xs">· {{ p.track_count }}</span>
@@ -80,7 +80,7 @@ onUnmounted(() => document.removeEventListener('click', onDocClick))
       <div class="border-t border-app my-1" />
       <button
         @click="newPlaylist"
-        class="block w-full text-left px-3 py-1.5 hover-surface text-accent font-medium"
+        class="block w-full text-left px-3 py-2.5 md:py-1.5 hover-surface text-accent font-medium"
       >
         + {{ $t('playlists.newPlaylist') }}
       </button>
