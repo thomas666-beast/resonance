@@ -1,0 +1,26 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Dotenv;
+use Mojo::Pg;
+
+my $env_file = "$FindBin::Bin/../../.env";
+Dotenv->load($env_file) if -e $env_file;
+
+my $dsn = $ENV{POSTGRES_DSN}
+       // "postgresql://$ENV{POSTGRES_USER}:$ENV{POSTGRES_PASSWORD}"
+        . "\@$ENV{POSTGRES_HOST}:$ENV{POSTGRES_PORT}/$ENV{POSTGRES_DB}";
+my $pg = Mojo::Pg->new($dsn);
+
+my $days = shift @ARGV // 7;
+
+my $result = $pg->db->query(
+    'DELETE FROM tracks
+      WHERE missing_at IS NOT NULL
+        AND missing_at < now() - make_interval(days => ?)',
+    $days,
+);
+
+say "Deleted " . $result->rows . " missing tracks older than $days day(s).";

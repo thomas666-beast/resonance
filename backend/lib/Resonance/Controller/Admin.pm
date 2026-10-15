@@ -192,4 +192,58 @@ sub transcode_clear ($c) {
     $c->render(json => { ok => \1, removed => $removed });
 }
 
+sub missing_tracks ($c) {
+    my $rows = $c->pg->db->query(
+        q{SELECT t.id, t.title, t.path, t.missing_at, t.duration_ms,
+                 al.title AS album_title, ar.name AS artist_name
+            FROM tracks t
+            LEFT JOIN albums  al ON al.id = t.album_id
+            LEFT JOIN artists ar ON ar.id = t.artist_id
+           WHERE t.missing_at IS NOT NULL
+           ORDER BY t.missing_at DESC
+           LIMIT 500},
+    )->hashes->to_array;
+
+    my $total = $c->pg->db->query(
+        'SELECT count(*) AS n FROM tracks WHERE missing_at IS NOT NULL',
+    )->hash->{n};
+
+    $c->render(json => { tracks => $rows, total => $total });
+}
+
+sub purge_missing ($c) {
+    my $body = $c->req->json // {};
+    my $days = $body->{days};
+
+    my @args;
+    my $where = 'missing_at IS NOT NULL';
+    if (defined $days && $days =~ /^\d+$/ && $days > 0) {
+        $where .= " AND missing_at < now() - make_interval(days => ?)";
+        push @args, $days;
+    }
+
+    my $n = $c->pg->db->query(
+        "DELETE FROM tracks WHERE $where",
+        @args,
+    )->rows;
+
+    $c->render(json => { ok => \1, deleted => $n });
+}
+
+sub restore_track ($c) {
+    my $id = $c->param('id');
+    return $c->render(status => 400, json => { error => 'invalid_id' })
+        unless $id =~ /^\d+$/;
+
+    my $n = $c->pg->db->query(
+        'UPDATE tracks SET missing_at = NULL WHERE id = ?',
+        $id,
+    )->rows;
+
+    return $c->render(status => 404, json => { error => 'not_found' })
+        unless $n;
+
+    $c->render(json => { ok => \1 });
+}
+
 1;

@@ -34,6 +34,19 @@ interface Stats {
   scan_paths: Array<{ id: number; path: string; last_scan_at: string | null }>
 }
 
+interface MissingTrack {
+  id: number
+  title: string
+  path: string
+  missing_at: string
+  duration_ms: number | null
+  album_title: string | null
+  artist_name: string | null
+}
+
+const missingTracks = ref<MissingTrack[]>([])
+const missingTotal = ref(0)
+
 const users   = ref<User[]>([])
 const total   = ref(0)
 const page    = ref(1)
@@ -159,9 +172,33 @@ async function clearTranscode() {
   await loadTranscodeStats()
 }
 
+async function loadMissing() {
+  const { data } = await api.get('/admin/missing')
+  missingTracks.value = data.tracks
+  missingTotal.value = data.total
+}
+
+async function purgeMissing() {
+  const days = prompt(t('admin.purgePrompt'), '7')
+  if (!days) return
+  const n = parseInt(days, 10)
+  if (isNaN(n) || n < 1) return
+  if (!confirm(t('admin.confirmPurge', { days: n }))) return
+  const { data } = await api.post('/admin/missing/purge', { days: n })
+  toast.success(t('admin.purged', { n: data.deleted }))
+  await loadMissing()
+}
+
+async function restoreTrack(id: number) {
+  await api.post(`/admin/missing/${id}/restore`)
+  toast.success(t('admin.restored'))
+  await loadMissing()
+}
+
 onMounted(() => {
   loadUsers()
   loadStats()
+  loadMissing()
 })
 </script>
 
@@ -329,6 +366,62 @@ onMounted(() => {
         >
           {{ $t('admin.transcodeClear') }}
         </button>
+      </div>
+    </section>
+
+    <!-- Missing tracks -->
+    <section v-if="missingTotal > 0" class="mb-10">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-heading">
+          {{ $t('admin.missingTracks') }}
+          <span class="text-muted text-sm font-normal">· {{ missingTotal }}</span>
+        </h2>
+        <button
+          @click="purgeMissing"
+          class="px-4 py-2 rounded-full text-sm font-medium text-danger
+                  border border-app hover:border-danger transition-colors"
+        >
+          {{ $t('admin.purgeOld') }}
+        </button>
+      </div>
+
+      <p class="text-muted text-sm mb-4">{{ $t('admin.missingHint') }}</p>
+
+      <div class="bg-surface border border-app rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-app text-left text-muted">
+              <th class="px-4 py-3 font-medium">{{ $t('admin.title') }}</th>
+              <th class="px-4 py-3 font-medium hidden md:table-cell">{{ $t('admin.artistLabel') }}</th>
+              <th class="px-4 py-3 font-medium hidden lg:table-cell">{{ $t('admin.missingSince') }}</th>
+              <th class="px-4 py-3 font-medium text-right w-32">{{ $t('admin.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="t in missingTracks" :key="t.id"
+                class="border-b border-app last:border-0 hover-surface">
+              <td class="px-4 py-3">
+                <div class="font-medium truncate max-w-xs">{{ t.title }}</div>
+                <div class="text-xs text-dim truncate max-w-xs">{{ t.path }}</div>
+              </td>
+              <td class="px-4 py-3 text-muted hidden md:table-cell truncate">
+                {{ t.artist_name ?? '—' }}
+                <span v-if="t.album_title"> · {{ t.album_title }}</span>
+              </td>
+              <td class="px-4 py-3 text-muted text-xs hidden lg:table-cell tabular">
+                {{ new Date(t.missing_at).toLocaleString() }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  @click="restoreTrack(t.id)"
+                  class="text-xs text-muted hover:text-accent transition-colors"
+                >
+                  {{ $t('admin.restore') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

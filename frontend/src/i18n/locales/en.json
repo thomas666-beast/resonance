@@ -112,7 +112,9 @@
   "scan": {
     "start": "Scan library",
     "running": "Scanning…",
-    "done": "Scan complete: {inserted} added, {updated} updated, {failed} failed"
+    "reconciling": "Reconciling…",
+    "done": "Scan complete: {inserted} added, {updated} updated",
+    "doneWithMissing": "Scan complete: {inserted} added, {missing} marked missing"
   },
   "nowPlaying": {
     "label": "Now Playing",
@@ -153,7 +155,17 @@
     "transcodeFiles": "{n} files",
     "transcodeClear": "Clear cache",
     "transcodeConfirm": "Delete all cached transcodes? They'll be regenerated on demand.",
-    "transcodeCleared": "Removed {n} files"
+    "transcodeCleared": "Removed {n} files",
+    "missingTracks": "Missing tracks",
+    "missingHint": "These files are no longer on disk. They are hidden from every client. Restore one if the file comes back, or purge old ones to remove them permanently.",
+    "missingSince": "Missing since",
+    "purgeOld": "Purge old",
+    "purgePrompt": "Delete missing tracks older than how many days?",
+    "confirmPurge": "Permanently delete all missing tracks older than {days} days? This cannot be undone.",
+    "purged": "Deleted {n} tracks",
+    "restore": "Restore",
+    "restored": "Track restored",
+    "artistLabel": "Artist"
   },
   "settings": {
     "title": "Settings",

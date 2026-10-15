@@ -221,6 +221,9 @@ sub _routes_admin ($self, $authed) {
     $admin->get   ('/admin/stats')      ->to('Admin#stats');
     $admin->get   ('/admin/transcode')  ->to('Admin#transcode_stats');
     $admin->delete('/admin/transcode')  ->to('Admin#transcode_clear');
+    $admin->get   ('/admin/missing')            ->to('Admin#missing_tracks');
+    $admin->post  ('/admin/missing/purge')      ->to('Admin#purge_missing');
+    $admin->post  ('/admin/missing/:id/restore')->to('Admin#restore_track');
 }
 
 1;
