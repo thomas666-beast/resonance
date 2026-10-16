@@ -256,6 +256,9 @@ sub _process_file ($app, $file, $scan_path_id) {
         )->hash->{id};
     }
 
+    # Sync genres (split multi-genre tags into separate rows)
+    _sync_track_genres($app, $track_id, $tags->{genre});
+
     return { inserted => !$existing, track_id => $track_id };
 }
 
@@ -342,6 +345,50 @@ sub _ensure_album_cover ($app, $album_id, $raw, $file) {
             $out, $album_id,
         );
         return;
+    }
+}
+
+# ── genre indexing ───────────────────────────────────────
+
+sub _sync_track_genres ($app, $track_id, $genre_string) {
+    return unless $track_id;
+
+    my $db = $app->pg->db;
+
+    # Remove the previous genre links for this track, then rebuild from
+    # the current tag. A rescan reflects any tag changes cleanly.
+    $db->query('DELETE FROM tracks_genres WHERE track_id = ?', $track_id);
+
+    return unless defined $genre_string && length $genre_string;
+
+    # The normalizer returns a comma-joined string; split into parts.
+    my %seen;
+    my @genres;
+    for my $part (split /,/, $genre_string) {
+        $part =~ s/^\s+|\s+$//g;
+        next unless length $part;
+        next unless length $part <= 100;  # guard against pathological tags
+        my $key = lc $part;
+        next if $seen{$key}++;
+        push @genres, $part;
+    }
+
+    return unless @genres;
+
+    for my $name (@genres) {
+        # Upsert the genre row. The unique index is on lower(name).
+        my $genre_id = $db->query(
+            q{INSERT INTO genres (name) VALUES (?)
+              ON CONFLICT (lower(name)) DO UPDATE SET name = genres.name
+              RETURNING id},
+            $name,
+        )->hash->{id};
+
+        $db->query(
+            q{INSERT INTO tracks_genres (track_id, genre_id)
+              VALUES (?, ?) ON CONFLICT DO NOTHING},
+            $track_id, $genre_id,
+        );
     }
 }
 
