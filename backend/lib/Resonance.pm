@@ -236,6 +236,7 @@ sub _routes_radio ($self, $authed) {
     $authed->get   ('/radio')               ->to('Radio#list');
     $authed->get   ('/radio/:id')           ->to('Radio#show');
     $authed->get   ('/radio/:id/stream')    ->to('Radio::Stream#stream');
+    $authed->get('/radio/:id/now-playing')->to('Radio::Stream#now_playing');
     $authed->post  ('/radio')               ->to('Radio#create');
     $authed->patch ('/radio/:id')           ->to('Radio#update');
     $authed->delete('/radio/:id')           ->to('Radio#remove');
