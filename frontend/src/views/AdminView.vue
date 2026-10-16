@@ -15,6 +15,8 @@ const auth = useAuthStore()
 const toast = useToastStore()
 const transcodeCache = ref<{ bytes: number; files: number; human: string } | null>(null)
 
+
+
 interface User {
   id: number
   username: string
@@ -42,6 +44,20 @@ interface MissingTrack {
   duration_ms: number | null
   album_title: string | null
   artist_name: string | null
+}
+
+const podcastCache = ref<{ bytes: number; files: number; human: string } | null>(null)
+
+async function loadPodcastCache() {
+  const { data } = await api.get('/podcasts/cache')
+  podcastCache.value = data.cache
+}
+
+async function clearPodcastCache() {
+  if (!confirm(t('admin.podcastCacheConfirm'))) return
+  const { data } = await api.delete('/podcasts/cache')
+  toast.success(t('admin.podcastCacheCleared', { n: data.removed }))
+  await loadPodcastCache()
 }
 
 const missingTracks = ref<MissingTrack[]>([])
@@ -199,6 +215,8 @@ onMounted(() => {
   loadUsers()
   loadStats()
   loadMissing()
+  loadTranscodeStats()
+  loadPodcastCache()
 })
 </script>
 

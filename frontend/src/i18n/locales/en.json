@@ -172,7 +172,12 @@
     "purged": "Deleted {n} tracks",
     "restore": "Restore",
     "restored": "Track restored",
-    "artistLabel": "Artist"
+    "artistLabel": "Artist",
+    "podcastCache": "Podcast cache",
+    "podcastCacheFiles": "{n} files",
+    "podcastCacheClear": "Clear cache",
+    "podcastCacheConfirm": "Delete all cached podcast episodes? They will be re-downloaded on next play.",
+    "podcastCacheCleared": "Removed {n} files"
   },
   "settings": {
     "title": "Settings",
@@ -262,7 +267,10 @@
     "urlRequired": "Feed URL is required",
     "invalidUrl": "Feed URL must start with http:// or https://",
     "lastFetched": "Updated",
-    "never": "never"
+    "never": "never",
+    "removeCache": "Remove download",
+    "confirmRemoveCache": "Remove the downloaded audio for {name}? Your listen position is preserved.",
+    "cacheRemoved": "Download removed"
   },
   "theme": {
     "dark": "Dark",

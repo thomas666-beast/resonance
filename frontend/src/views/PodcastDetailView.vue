@@ -4,10 +4,12 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api/client'
 import { usePlayerStore, type PodcastEpisode } from '@/stores/player'
+import { useToastStore } from '@/stores/toast'
 
 const { t } = useI18n()
 const route = useRoute()
 const player = usePlayerStore()
+const toast = useToastStore()
 
 interface Feed {
   id: number
@@ -25,6 +27,7 @@ interface EpisodeRow extends PodcastEpisode {
   progress_position_sec?: number
   progress_duration_sec?: number | null
   progress_completed?: boolean
+  cached?: boolean
 }
 
 interface Progress {
@@ -90,6 +93,18 @@ function pct(ep: EpisodeRow): number {
   return Math.min(100, Math.round((p.position_sec / p.duration_sec) * 100))
 }
 
+async function removeEpisodeCache(ep: EpisodeRow, e: MouseEvent) {
+  e.stopPropagation()
+  if (!confirm(t('podcasts.confirmRemoveCache', { name: ep.title }))) return
+  try {
+    await api.delete(`/podcast-episodes/${ep.id}/cache`)
+    ep.cached = false
+    toast.success(t('podcasts.cacheRemoved'))
+  } catch {
+    toast.error(t('toasts.genericError'))
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -147,6 +162,22 @@ onMounted(load)
           <div v-if="pct(ep) > 0 && pct(ep) < 100"
                class="mt-3 h-1 bg-surface-2 rounded-full overflow-hidden">
             <div class="h-full bg-accent transition-all" :style="{ width: pct(ep) + '%' }" />
+          </div>
+
+          <div v-if="ep.cached" class="mt-3 flex justify-end">
+            <button
+              @click="removeEpisodeCache(ep, $event)"
+              class="text-xs text-muted hover:text-danger transition-colors
+                     flex items-center gap-1"
+              :aria-label="$t('podcasts.removeCache')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                   class="w-3.5 h-3.5 fill-none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              </svg>
+              {{ $t('podcasts.removeCache') }}
+            </button>
           </div>
         </div>
       </div>

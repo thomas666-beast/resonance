@@ -5,6 +5,9 @@ use Mojo::UserAgent;
 use Mojo::URL;
 use Resonance::Util::PodcastFetch qw(serve_episode);
 
+use File::Find::Rule;
+use Mojo::File qw(path);
+use Digest::SHA qw(sha256_hex);
 
 my $UA_STRING         = 'Mozilla/5.0 (compatible; Resonance/0.01)';
 my $MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;    # 500 MB
@@ -65,13 +68,27 @@ sub show_feed ($c) {
         unless $feed;
 
     my $episodes = $c->pg->db->query(
-        q{SELECT id, guid, title, description, audio_url, duration_sec,
-                 published_at, image_url, episode_number, season_number
-            FROM podcast_episodes
-           WHERE feed_id = ?
-        ORDER BY published_at DESC NULLS LAST, id DESC},
-        $id,
+        q{SELECT e.id, e.guid, e.title, e.description, e.audio_url,
+                 e.duration_sec, e.published_at, e.image_url,
+                 e.episode_number, e.season_number,
+                 COALESCE(p.position_sec, 0)    AS progress_position_sec,
+                 p.duration_sec                 AS progress_duration_sec,
+                 COALESCE(p.completed, FALSE)   AS progress_completed
+            FROM podcast_episodes e
+            LEFT JOIN podcast_progress p
+              ON p.episode_id = e.id AND p.user_id = ?
+           WHERE e.feed_id = ?
+        ORDER BY e.published_at DESC NULLS LAST, e.id DESC},
+        $uid, $id,
     )->hashes->to_array;
+
+    # Flag which episodes have a cached file on disk
+    my $dir = _cache_dir_for($c);
+    for my $ep (@$episodes) {
+        my $hash = substr(sha256_hex($ep->{audio_url}), 0, 16);
+        my $file = "$dir/$ep->{id}-$hash.mp3";
+        $ep->{cached} = (-f $file && -s $file) ? \1 : \0;
+    }
 
     $c->render(json => { feed => $feed, episodes => $episodes });
 }
@@ -365,6 +382,86 @@ sub set_progress ($c) {
     );
 
     $c->render(json => { ok => \1 });
+}
+
+# ── podcast cache management ─────────────────────────────
+
+sub _cache_dir_for ($c) {
+    my $dir = $c->config->{podcast_cache_dir} // 'data/podcasts';
+    path($dir)->make_path unless -d $dir;
+    return $dir;
+}
+
+sub cache_stats ($c) {
+    my $dir = _cache_dir_for($c);
+    my ($bytes, $files) = (0, 0);
+
+    my @paths = File::Find::Rule->file->in($dir);
+    for my $p (@paths) {
+        $files++;
+        $bytes += -s $p;
+    }
+
+    $c->render(json => {
+        cache => {
+            bytes => $bytes,
+            files => $files,
+            human => _human_size($bytes),
+        },
+    });
+}
+
+sub clear_cache ($c) {
+    my $dir     = _cache_dir_for($c);
+    my $removed = 0;
+
+    my @paths = File::Find::Rule->file->in($dir);
+    for my $p (@paths) {
+        unlink $p and $removed++;
+    }
+
+    $c->render(json => { ok => \1, removed => $removed });
+}
+
+# Delete the cached audio for a specific episode.
+# Does NOT touch play progress — the episode remains in the feed.
+sub delete_episode_cache ($c) {
+    my $id  = $c->param('id');
+    my $uid = $c->stash('current_user_id');
+
+    return $c->render(status => 400, json => { error => 'invalid_id' })
+        unless _valid_id($id);
+
+    my $ep = $c->pg->db->query(
+        q{SELECT e.id, e.audio_url
+            FROM podcast_episodes e
+            JOIN podcast_feeds f ON f.id = e.feed_id
+            JOIN user_podcast_subscriptions s
+              ON s.feed_id = f.id AND s.user_id = ?
+           WHERE e.id = ?},
+        $uid, $id,
+    )->hash;
+
+    return $c->render(status => 404, json => { error => 'episode_not_found' })
+        unless $ep;
+
+    my $dir  = _cache_dir_for($c);
+    my $hash = substr(sha256_hex($ep->{audio_url}), 0, 16);
+    my $file = "$dir/$ep->{id}-$hash.mp3";
+
+    my $removed = 0;
+    if (-f $file) {
+        unlink $file and $removed = 1;
+    }
+
+    $c->render(json => { ok => \1, removed => $removed });
+}
+
+sub _human_size ($bytes) {
+    return "$bytes B" if $bytes < 1024;
+    return sprintf('%.1f KB', $bytes / 1024)      if $bytes < 1024 ** 2;
+    return sprintf('%.1f MB', $bytes / 1024 ** 2) if $bytes < 1024 ** 3;
+    return sprintf('%.2f GB', $bytes / 1024 ** 3);
 }
 
 1;

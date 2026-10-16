@@ -1,0 +1,40 @@
+#!/usr/bin/env perl
+use Mojo::Base -strict;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Dotenv;
+use Mojo::File qw(path);
+use File::Find::Rule;
+
+my $env_file = "$FindBin::Bin/../../.env";
+Dotenv->load($env_file) if -e $env_file;
+
+my $dir = $ENV{PODCAST_CACHE_DIR} // "$FindBin::Bin/../data/podcasts";
+
+unless (-d $dir) {
+    say "No podcast cache directory at $dir";
+    exit 0;
+}
+
+my $days = shift @ARGV // 30;
+unless ($days =~ /^\d+$/ && $days > 0) {
+    die "Usage: $0 [days]\n";
+}
+
+my $cutoff  = time - ($days * 86400);
+my ($count, $freed) = (0, 0);
+
+my @paths = File::Find::Rule->file->in($dir);
+for my $p (@paths) {
+    my $mtime = (stat $p)[9] // 0;
+    next if $mtime >= $cutoff;
+    my $size = -s $p;
+    if (unlink $p) {
+        $count++;
+        $freed += $size;
+    }
+}
+
+printf "Removed %d file(s), freed %.1f MB (older than %d day(s))\n",
+    $count, $freed / 1024 / 1024, $days;
