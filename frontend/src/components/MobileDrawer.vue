@@ -106,6 +106,7 @@ async function logout() {
               { to: '/favorites', label: t('nav.favorites') },
               { to: '/playlists', label: t('nav.playlists') },
               { to: '/radio',     label: t('nav.radio') },
+              { to: '/podcasts',  label: t('nav.podcasts') },
               ...(auth.isAdmin ? [{ to: '/admin', label: t('nav.admin') }] : []),
             ]"
             :key="item.to"

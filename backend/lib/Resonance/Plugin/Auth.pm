@@ -15,6 +15,7 @@ sub register ($self, $app, $conf) {
                 && (   $path =~ m{^/api/stream/}
                     || $path =~ m{^/api/cover/}
                     || $path =~ m{^/api/radio/\d+/stream}
+                    || $path =~ m{^/api/podcast-episodes/\d+/stream}
                     || $path =~ m{^/api/ws}
                 )) {
                 $token = $c->param('token');

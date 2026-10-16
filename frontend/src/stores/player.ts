@@ -25,6 +25,17 @@ export interface RadioStation {
   bitrate: number | null
 }
 
+export interface PodcastEpisode {
+  id: number
+  title: string
+  audio_url: string
+  duration_sec: number | null
+  feed_id: number
+  feed_title: string | null
+  image_url: string | null
+  feed_image_url: string | null
+}
+
 export const usePlayerStore = defineStore('player', () => {
   const queue = ref<Track[]>([])
   const index = ref(-1)
@@ -34,19 +45,25 @@ export const usePlayerStore = defineStore('player', () => {
   const volume = ref(Number(localStorage.getItem('resonance_volume') ?? 1))
 
   // 'library' | 'radio' — controls which UI affordances appear
-  const source = ref<'library' | 'radio'>('library')
+  const source = ref<'library' | 'radio' | 'podcast'>('library')
   const currentRadio = ref<RadioStation | null>(null)
+  const currentEpisode = ref<PodcastEpisode | null>(null)
 
   let howl: Howl | null = null
   let rafId: number | null = null
   let loggedFor: number | null = null
 
+  let progressTimer: ReturnType<typeof setInterval> | null = null
+
   const current = computed<Track | null>(() => {
-    if (source.value === 'radio') return null
+    if (source.value !== 'library') return null
     const i = index.value
     if (i < 0 || i >= queue.value.length) return null
     return queue.value[i] ?? null
   })
+
+  const isLive = computed(() => source.value === 'radio')
+  const isPodcast = computed(() => source.value === 'podcast')
 
   const upcoming = computed<Track[]>(() => {
     if (source.value === 'radio') return []
@@ -59,8 +76,6 @@ export const usePlayerStore = defineStore('player', () => {
     if (index.value <= 0) return []
     return queue.value.slice(0, index.value)
   })
-
-  const isLive = computed(() => source.value === 'radio')
 
   function stopTicker() {
     if (rafId !== null) {
@@ -167,6 +182,95 @@ export const usePlayerStore = defineStore('player', () => {
     playing.value = false
     source.value = 'library'
     currentRadio.value = null
+  }
+
+  function stopProgressTimer() {
+    if (progressTimer) {
+      clearInterval(progressTimer)
+      progressTimer = null
+    }
+  }
+
+  async function saveEpisodeProgress(completed = false) {
+    const ep = currentEpisode.value
+    if (!ep || source.value !== 'podcast') return
+    try {
+      await api.put(`/podcast-episodes/${ep.id}/progress`, {
+        position_sec: Math.floor(position.value),
+        duration_sec: Math.floor(duration.value || ep.duration_sec || 0),
+        completed,
+      })
+    } catch {
+      // silent
+    }
+  }
+
+  function playEpisode(ep: PodcastEpisode, startAt = 0) {
+    if (howl) {
+      howl.unload()
+      howl = null
+    }
+    stopTicker()
+    stopProgressTimer()
+
+    queue.value = []
+    index.value = -1
+    loggedFor = null
+
+    source.value = 'podcast'
+    currentRadio.value = null
+    currentEpisode.value = ep
+    position.value = startAt
+    duration.value = ep.duration_sec ?? 0
+
+    const token = (window as any).__resonance_access_token
+
+    howl = new Howl({
+      src: [`/api/podcast-episodes/${ep.id}/stream?token=${encodeURIComponent(token ?? '')}`],
+      html5: true,
+      volume: volume.value,
+      onload: () => { duration.value = howl?.duration() ?? duration.value },
+      onplay: () => {
+        playing.value = true
+        tick()
+        // Save progress every 15 seconds while playing
+        progressTimer = setInterval(() => saveEpisodeProgress(false), 15000)
+        if (startAt > 0 && howl) howl.seek(startAt)
+      },
+      onpause: () => {
+        playing.value = false
+        stopTicker()
+        stopProgressTimer()
+        saveEpisodeProgress(false)
+      },
+      onstop: () => {
+        playing.value = false
+        stopTicker()
+        stopProgressTimer()
+      },
+      onend: () => {
+        playing.value = false
+        stopTicker()
+        stopProgressTimer()
+        saveEpisodeProgress(true)
+      },
+    })
+
+    howl.play()
+  }
+
+  function stopEpisode() {
+    if (howl) {
+      howl.unload()
+      howl = null
+    }
+    stopTicker()
+    stopProgressTimer()
+    playing.value = false
+    source.value = 'library'
+    currentEpisode.value = null
+    position.value = 0
+    duration.value = 0
   }
 
   function playTrack(track: Track, newQueue: Track[] = [track]) {
@@ -320,6 +424,7 @@ export const usePlayerStore = defineStore('player', () => {
       howl = null
     }
     stopTicker()
+    stopProgressTimer()
     playing.value = false
     position.value = 0
     duration.value = 0
@@ -328,15 +433,20 @@ export const usePlayerStore = defineStore('player', () => {
     loggedFor = null
     source.value = 'library'
     currentRadio.value = null
+    currentEpisode.value = null
   }
 
   Howler.autoUnlock = true
   Howler.volume(volume.value)
 
+
+
   return {
     queue, index, playing, position, duration, volume,
-    source, current, currentRadio, upcoming, played, isLive,
-    playTrack, playRadio, stopRadio, play, pause, toggle, next, prev, seek, setVolume,
+    source, current, currentRadio, currentEpisode,
+    upcoming, played, isLive, isPodcast,
+    playTrack, playRadio, stopRadio, playEpisode, stopEpisode,
+    play, pause, toggle, next, prev, seek, setVolume,
     jumpTo, removeAt, move, clearUpcoming, stop,
   }
 })

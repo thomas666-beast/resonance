@@ -246,13 +246,16 @@ sub _routes_radio ($self, $authed) {
 }
 
 sub _routes_podcasts ($self, $authed) {
-    $authed->get   ('/podcasts')                ->to('Podcasts#list_feeds');
-    $authed->post  ('/podcasts')                ->to('Podcasts#subscribe');
-    $authed->post  ('/podcasts/refresh-all')    ->to('Podcasts#refresh_all');
-    $authed->get   ('/podcasts/:id')            ->to('Podcasts#show_feed');
-    $authed->delete('/podcasts/:id')            ->to('Podcasts#unsubscribe');
-    $authed->post  ('/podcasts/:id/refresh')    ->to('Podcasts#refresh_feed');
-    $authed->get   ('/podcast-episodes/:id')    ->to('Podcasts#show_episode');
+    $authed->get   ('/podcasts')                            ->to('Podcasts#list_feeds');
+    $authed->post  ('/podcasts')                            ->to('Podcasts#subscribe');
+    $authed->post  ('/podcasts/refresh-all')                ->to('Podcasts#refresh_all');
+    $authed->get   ('/podcasts/:id')                        ->to('Podcasts#show_feed');
+    $authed->delete('/podcasts/:id')                        ->to('Podcasts#unsubscribe');
+    $authed->post  ('/podcasts/:id/refresh')                ->to('Podcasts#refresh_feed');
+    $authed->get   ('/podcast-episodes/:id')                ->to('Podcasts#show_episode');
+    $authed->get   ('/podcast-episodes/:id/stream')         ->to('Podcasts#stream_episode');
+    $authed->get   ('/podcast-episodes/:id/progress')       ->to('Podcasts#get_progress');
+    $authed->put   ('/podcast-episodes/:id/progress')       ->to('Podcasts#set_progress');
 }
 
 1;

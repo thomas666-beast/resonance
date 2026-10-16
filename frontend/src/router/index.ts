@@ -18,6 +18,9 @@ const router = createRouter({
     { path: '/admin',        name: 'admin',       component: () => import('@/views/AdminView.vue'),       meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/settings',     name: 'settings',    component: () => import('@/views/SettingsView.vue'),    meta: { requiresAuth: true } },
     { path: '/radio', name: 'radio', component: () => import('@/views/RadioView.vue'), meta: { requiresAuth: true } },
+    { path: '/podcasts/:id', name: 'podcast', component: () => import('@/views/PodcastDetailView.vue'), meta: { requiresAuth: true } },
+    { path: '/podcasts',     name: 'podcasts', component: () => import('@/views/PodcastsView.vue'),    meta: { requiresAuth: true } },
+    { path: '/podcasts/:id', name: 'podcast',  component: () => import('@/views/PodcastDetailView.vue'), meta: { requiresAuth: true } },
   ],
 })
 

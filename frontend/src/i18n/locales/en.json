@@ -22,7 +22,8 @@
     "menu": "Menu",
     "theme": "Theme",
     "settings": "Settings",
-    "radio": "Radio"
+    "radio": "Radio",
+    "podcasts": "Podcasts"
   },
   "auth": {
     "signIn": "Sign in",
@@ -228,5 +229,31 @@
     "urlHint": "Must be an http:// or https:// streaming URL.",
     "nameRequired": "Name is required",
     "invalidUrl": "Stream URL must start with http:// or https://"
+  },
+  "podcasts": {
+    "title": "Podcasts",
+    "label": "Podcast",
+    "episodeCount": "{n} episodes",
+    "played": "Played",
+    "lastError": "Last error",
+    "addTitle": "Subscribe to a podcast",
+    "addDescription": "Paste the RSS feed URL of the show you want to follow. Resonance will fetch episodes in the background.",
+    "feedUrl": "Feed URL",
+    "subscribe": "Subscribe",
+    "unsubscribe": "Unsubscribe",
+    "subscribed": "Subscribed",
+    "unsubscribed": "Unsubscribed",
+    "refresh": "Refresh",
+    "refreshAll": "Refresh all",
+    "refreshQueued": "Refresh queued",
+    "refreshedAll": "Refreshing {n} feeds",
+    "empty": "No podcasts yet.",
+    "emptyTitle": "No podcasts yet",
+    "emptyDescription": "Subscribe to a feed URL to start listening.",
+    "confirmUnsubscribe": "Unsubscribe from {name}? Its downloaded episodes will be removed.",
+    "urlRequired": "Feed URL is required",
+    "invalidUrl": "Feed URL must start with http:// or https://",
+    "lastFetched": "Updated",
+    "never": "never"
   }
 }

@@ -9,6 +9,7 @@ use Resonance::Subsonic::Format qw(
 use Resonance::Controller::Subsonic::Browse ();
 use Resonance::Controller::Subsonic::Media  ();
 use Resonance::Controller::Subsonic::Lists  ();
+use Resonance::Controller::Subsonic::Podcasts ();
 
 # ── dispatcher ───────────────────────────────────────────
 
@@ -71,6 +72,16 @@ sub dispatch ($c) {
         scrobble        => \&Resonance::Controller::Subsonic::Lists::scrobble,
         getScanStatus   => \&Resonance::Controller::Subsonic::Lists::get_scan_status,
         startScan       => \&Resonance::Controller::Subsonic::Lists::start_scan,
+
+        # Podcasts
+        getPodcasts               => \&Resonance::Controller::Subsonic::Podcasts::get_podcasts,
+        getNewestPodcasts         => \&Resonance::Controller::Subsonic::Podcasts::get_newest_podcasts,
+        getPodcastEpisode         => \&Resonance::Controller::Subsonic::Podcasts::get_podcast_episode,
+        createPodcastChannel      => \&Resonance::Controller::Subsonic::Podcasts::create_podcast_channel,
+        deletePodcastChannel      => \&Resonance::Controller::Subsonic::Podcasts::delete_podcast_channel,
+        refreshPodcasts           => \&Resonance::Controller::Subsonic::Podcasts::refresh_podcasts,
+        downloadPodcastEpisode    => \&Resonance::Controller::Subsonic::Podcasts::download_podcast_episode,
+        deletePodcastEpisode      => \&Resonance::Controller::Subsonic::Podcasts::delete_podcast_episode,
     );
 
     my $handler = $handlers{$method};

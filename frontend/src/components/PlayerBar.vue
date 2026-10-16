@@ -15,12 +15,13 @@ const displayPosition = computed(() =>
   seeking.value ? seekValue.value : player.position,
 )
 
-const coverSrc = computed(() => {
-  if (player.isLive && player.currentRadio?.logo_url) {
-    return player.currentRadio.logo_url
-  }
-  return null
-})
+const radioCover = computed(() => player.currentRadio?.logo_url ?? null)
+
+const podcastCover = computed(() =>
+  player.currentEpisode?.image_url
+    ?? player.currentEpisode?.feed_image_url
+    ?? null,
+)
 
 function fmt(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '0:00'
@@ -46,16 +47,17 @@ function onVolumeInput(e: Event) {
 
 <template>
   <div
-    v-if="player.current || player.currentRadio"
+    v-if="player.current || player.currentRadio || player.currentEpisode"
     class="border-t border-app bg-surface/95 backdrop-blur-sm shadow-2xl text-app"
   >
     <!-- Desktop -->
     <div class="hidden md:flex px-6 py-3 items-center gap-4">
+
       <!-- Radio -->
-      <template v-if="player.isLive">
+      <template v-if="player.isLive && player.currentRadio">
         <div class="flex items-center gap-3 min-w-0 flex-1">
           <div class="w-10 h-10 rounded bg-surface-2 flex items-center justify-center overflow-hidden shrink-0">
-            <img v-if="coverSrc" :src="coverSrc" class="w-full h-full object-cover" alt="" />
+            <img v-if="radioCover" :src="radioCover" class="w-full h-full object-cover" alt="" />
             <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                  class="w-5 h-5 fill-none stroke-muted" stroke-width="1.75">
               <circle cx="12" cy="12" r="3" />
@@ -63,10 +65,10 @@ function onVolumeInput(e: Event) {
             </svg>
           </div>
           <div class="min-w-0">
-            <div class="text-sm font-medium truncate">{{ player.currentRadio?.name }}</div>
+            <div class="text-sm font-medium truncate">{{ player.currentRadio.name }}</div>
             <div class="text-xs text-muted truncate">
               <span class="text-accent font-medium">LIVE</span>
-              <span v-if="player.currentRadio?.genre"> · {{ player.currentRadio.genre }}</span>
+              <span v-if="player.currentRadio.genre"> · {{ player.currentRadio.genre }}</span>
             </div>
           </div>
         </div>
@@ -90,13 +92,79 @@ function onVolumeInput(e: Event) {
         <button
           @click="player.stop()"
           class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
-          :aria-label="$t('radio.stop')"
+          aria-label="Stop"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
+
+        <div class="flex items-center gap-2 w-32">
+          <span class="text-xs text-muted">🔊</span>
+          <input type="range" min="0" max="1" step="0.01"
+                 :value="player.volume" @input="onVolumeInput"
+                 class="flex-1" aria-label="Volume" />
+        </div>
+      </template>
+
+      <!-- Podcast episode -->
+      <template v-else-if="player.isPodcast && player.currentEpisode">
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <div class="w-10 h-10 rounded bg-surface-2 flex items-center justify-center overflow-hidden shrink-0">
+            <img v-if="podcastCover" :src="podcastCover" class="w-full h-full object-cover" alt="" />
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 class="w-5 h-5 fill-none stroke-muted" stroke-width="1.75">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M3 8h18" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-medium truncate">{{ player.currentEpisode.title }}</div>
+            <div class="text-xs text-muted truncate">
+              <span class="text-accent font-medium">PODCAST</span>
+              <span v-if="player.currentEpisode.feed_title"> · {{ player.currentEpisode.feed_title }}</span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          @click="player.toggle()"
+          class="w-10 h-10 rounded-full bg-accent text-white flex items-center
+                 justify-center hover:scale-105 active:scale-95 transition-transform"
+          :aria-label="player.playing ? 'Pause' : 'Play'"
+        >
+          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+            <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
+
+        <button
+          @click="player.stop()"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+          aria-label="Close"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="flex-1 flex items-center gap-3">
+          <span class="text-xs text-muted w-10 text-right tabular">{{ fmt(displayPosition) }}</span>
+          <input
+            type="range" min="0" :max="player.duration || 0" step="0.1"
+            :value="displayPosition" @input="onSeekInput" @change="onSeekCommit"
+            class="flex-1" aria-label="Seek"
+          />
+          <span class="text-xs text-muted w-10 tabular">{{ fmt(player.duration) }}</span>
+        </div>
 
         <div class="flex items-center gap-2 w-32">
           <span class="text-xs text-muted">🔊</span>
@@ -187,10 +255,10 @@ function onVolumeInput(e: Event) {
     <!-- Mobile -->
     <div class="md:hidden">
       <!-- Radio -->
-      <template v-if="player.isLive">
+      <template v-if="player.isLive && player.currentRadio">
         <div class="flex items-center gap-3 px-4 py-3">
           <div class="w-10 h-10 rounded bg-surface-2 flex items-center justify-center overflow-hidden shrink-0">
-            <img v-if="coverSrc" :src="coverSrc" class="w-full h-full object-cover" alt="" />
+            <img v-if="radioCover" :src="radioCover" class="w-full h-full object-cover" alt="" />
             <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                  class="w-5 h-5 fill-none stroke-muted" stroke-width="1.75">
               <circle cx="12" cy="12" r="3" />
@@ -198,10 +266,10 @@ function onVolumeInput(e: Event) {
             </svg>
           </div>
           <div class="min-w-0 flex-1">
-            <div class="text-sm font-medium truncate text-app">{{ player.currentRadio?.name }}</div>
+            <div class="text-sm font-medium truncate text-app">{{ player.currentRadio.name }}</div>
             <div class="text-xs text-muted truncate">
               <span class="text-accent font-medium">LIVE</span>
-              <span v-if="player.currentRadio?.genre"> · {{ player.currentRadio.genre }}</span>
+              <span v-if="player.currentRadio.genre"> · {{ player.currentRadio.genre }}</span>
             </div>
           </div>
           <button
@@ -219,13 +287,66 @@ function onVolumeInput(e: Event) {
           <button
             @click="player.stop()"
             class="p-2 text-muted active:text-app transition-colors"
-            :aria-label="$t('radio.stop')"
+            aria-label="Stop"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                  class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>
+        </div>
+      </template>
+
+      <!-- Podcast -->
+      <template v-else-if="player.isPodcast && player.currentEpisode">
+        <div class="flex items-center gap-3 px-4 pt-3 pb-2">
+          <div class="w-10 h-10 rounded bg-surface-2 flex items-center justify-center overflow-hidden shrink-0">
+            <img v-if="podcastCover" :src="podcastCover" class="w-full h-full object-cover" alt="" />
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 class="w-5 h-5 fill-none stroke-muted" stroke-width="1.75">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M3 8h18" />
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-medium truncate text-app">{{ player.currentEpisode.title }}</div>
+            <div class="text-xs text-muted truncate">
+              <span class="text-accent font-medium">PODCAST</span>
+              <span v-if="player.currentEpisode.feed_title"> · {{ player.currentEpisode.feed_title }}</span>
+            </div>
+          </div>
+          <button
+            @click="player.stop()"
+            class="p-2 text-muted active:text-app transition-colors"
+            aria-label="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="px-4 pb-3 flex items-center gap-3">
+          <button
+            @click="player.toggle()"
+            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
+            :aria-label="player.playing ? 'Pause' : 'Play'"
+          >
+            <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+              <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current ml-0.5">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+          <div class="flex-1 flex items-center gap-2 min-w-0">
+            <span class="text-[10px] text-muted tabular shrink-0">{{ fmt(displayPosition) }}</span>
+            <input type="range" min="0" :max="player.duration || 0" step="0.1"
+                   :value="displayPosition" @input="onSeekInput" @change="onSeekCommit"
+                   class="flex-1 min-w-0" aria-label="Seek" />
+            <span class="text-[10px] text-muted tabular shrink-0">{{ fmt(player.duration) }}</span>
+          </div>
         </div>
       </template>
 
