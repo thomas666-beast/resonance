@@ -92,16 +92,22 @@ watch(
 
         <button
           @click="player.toggle()"
-          class="w-10 h-10 rounded-full bg-accent text-white flex items-center
-                 justify-center hover:scale-105 active:scale-95 transition-transform"
-          :aria-label="player.playing ? 'Pause' : 'Play'"
+          :disabled="player.loading"
+          class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center
+                  active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
+                  transition-transform shrink-0"
+          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
         >
-          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" class="w-5 h-5 animate-spin">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                    stroke-dashoffset="14" />
+          </svg>
+          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current ml-0.5">
             <path d="M8 5v14l11-7z" />
           </svg>
         </button>
@@ -148,11 +154,19 @@ watch(
 
         <button
           @click="player.toggle()"
+          :disabled="player.loading"
           class="w-10 h-10 rounded-full bg-accent text-white flex items-center
-                 justify-center hover:scale-105 active:scale-95 transition-transform"
-          :aria-label="player.playing ? 'Pause' : 'Play'"
+                 justify-center hover:scale-105 active:scale-95 disabled:opacity-70
+                 disabled:cursor-not-allowed transition-transform"
+          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
         >
-          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 animate-spin">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                    stroke-dashoffset="14" />
+          </svg>
+          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 24 24" class="w-4 h-4 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
@@ -217,23 +231,29 @@ watch(
               <path d="M6 6h2v12H6zM9.5 12l8.5 6V6z" />
             </svg>
           </button>
-          <button
-            @click="player.toggle()"
-            class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
-            :aria-label="player.playing ? 'Pause' : 'Play'"
-          >
-            <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-              <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-            </svg>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </button>
-          <button @click="player.next()" class="p-2 rounded-full hover:bg-surface-2 transition-colors text-app" aria-label="Next">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
-              <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z" />
-            </svg>
-          </button>
+        <button
+          @click="player.toggle()"
+          :disabled="player.loading"
+          class="w-10 h-10 rounded-full bg-accent text-white flex items-center
+                 justify-center hover:scale-105 active:scale-95 disabled:opacity-70
+                 disabled:cursor-not-allowed transition-transform"
+          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
+        >
+          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 animate-spin">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                    stroke-dashoffset="14" />
+          </svg>
+          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+            <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
         </div>
 
         <div class="flex-1 flex items-center gap-3">
@@ -296,10 +316,19 @@ watch(
           </div>
           <button
             @click="player.toggle()"
-            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
-            :aria-label="player.playing ? 'Pause' : 'Play'"
+            :disabled="player.loading"
+            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center
+                   active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
+                   transition-transform shrink-0"
+            :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
           >
-            <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+            <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24" class="w-5 h-5 animate-spin">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                      stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                      stroke-dashoffset="14" />
+            </svg>
+            <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
               <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
             </svg>
             <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current ml-0.5">
@@ -352,10 +381,19 @@ watch(
         <div class="px-4 pb-3 flex items-center gap-3">
           <button
             @click="player.toggle()"
-            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
-            :aria-label="player.playing ? 'Pause' : 'Play'"
+            :disabled="player.loading"
+            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center
+                   active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
+                   transition-transform shrink-0"
+            :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
           >
-            <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+            <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24" class="w-5 h-5 animate-spin">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                      stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                      stroke-dashoffset="14" />
+            </svg>
+            <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
               <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
             </svg>
             <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current ml-0.5">
@@ -406,10 +444,19 @@ watch(
           </button>
           <button
             @click="player.toggle()"
-            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
-            :aria-label="player.playing ? 'Pause' : 'Play'"
+            :disabled="player.loading"
+            class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center
+                   active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
+                   transition-transform shrink-0"
+            :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
           >
-            <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+            <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24" class="w-5 h-5 animate-spin">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                      stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                      stroke-dashoffset="14" />
+            </svg>
+            <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
               <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
             </svg>
             <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current ml-0.5">

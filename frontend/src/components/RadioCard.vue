@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePlayerStore, type RadioStation } from '@/stores/player'
 import { useRadioStore } from '@/stores/radio'
@@ -10,13 +11,17 @@ const { t } = useI18n()
 const player = usePlayerStore()
 const radio  = useRadioStore()
 
+const isCurrent = computed(() =>
+  player.isLive && player.currentRadio?.id === props.station.id,
+)
+
+const isLoading = computed(() => isCurrent.value && player.loading)
+
+const nowPlaying = computed(() => radio.nowPlaying[props.station.id] ?? null)
+
 function play(e?: MouseEvent) {
   e?.stopPropagation()
   player.playRadio(props.station)
-}
-
-function isCurrent(): boolean {
-  return player.isLive && player.currentRadio?.id === props.station.id
 }
 </script>
 
@@ -24,16 +29,14 @@ function isCurrent(): boolean {
   <div
     class="group relative bg-surface border border-app rounded-xl p-4
            hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer"
-    :class="{ 'border-accent': isCurrent() }"
+    :class="{ 'border-accent': isCurrent }"
     @click="play"
   >
-    <!-- Admin menu (always visible for admins) -->
     <div v-if="radio.isAdmin" class="absolute top-3 right-3 z-10">
       <button
         @click.stop="emit('edit')"
         class="p-1.5 rounded-full hover:bg-surface-2 text-muted transition-colors"
         :aria-label="t('radio.edit')"
-        :title="t('radio.edit')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              class="w-4 h-4 fill-none" stroke="currentColor" stroke-width="2"
@@ -45,7 +48,6 @@ function isCurrent(): boolean {
         @click.stop="emit('delete')"
         class="p-1.5 rounded-full hover:bg-surface-2 text-muted hover:text-danger transition-colors"
         :aria-label="t('radio.delete')"
-        :title="t('radio.delete')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
              class="w-4 h-4 fill-none" stroke="currentColor" stroke-width="2"
@@ -67,9 +69,13 @@ function isCurrent(): boolean {
 
       <div class="min-w-0 flex-1 pt-1">
         <div class="text-sm font-medium text-app truncate">{{ station.name }}</div>
+
         <div class="text-xs text-muted truncate mt-1">
-          <template v-if="isCurrent() && radio.nowPlaying[station.id]">
-            <span class="text-accent">{{ radio.nowPlaying[station.id] }}</span>
+          <template v-if="isLoading">
+            <span class="text-accent">{{ t('radio.connecting') }}</span>
+          </template>
+          <template v-else-if="isCurrent && nowPlaying">
+            <span class="text-accent">{{ nowPlaying }}</span>
           </template>
           <template v-else>
             <template v-if="station.genre">{{ station.genre }}</template>
@@ -81,19 +87,30 @@ function isCurrent(): boolean {
         <div class="mt-4 flex items-center gap-3">
           <button
             @click.stop="play"
+            :disabled="isLoading"
             class="px-3 py-1.5 rounded-full text-xs font-medium
                    bg-accent text-white hover:opacity-90 active:scale-95
-                   transition-all flex items-center gap-1.5"
+                   disabled:opacity-70 transition-all flex items-center gap-1.5"
           >
-            <svg v-if="isCurrent() && player.playing" xmlns="http://www.w3.org/2000/svg"
-                 viewBox="0 0 24 24" class="w-3 h-3 fill-current">
+            <svg v-if="isLoading" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24" class="w-3 h-3 animate-spin">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                      stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                      stroke-dashoffset="14" />
+            </svg>
+            <svg v-else-if="isCurrent && player.playing"
+                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 class="w-3 h-3 fill-current">
               <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
             </svg>
             <svg v-else xmlns="http://www.w3.org/2000/svg"
                  viewBox="0 0 24 24" class="w-3 h-3 fill-current">
               <path d="M8 5v14l11-7z" />
             </svg>
-            {{ isCurrent() && player.playing ? t('radio.stop') : t('radio.play') }}
+            <template v-if="isLoading">{{ t('radio.connecting') }}</template>
+            <template v-else-if="isCurrent && player.playing">{{ t('radio.pause') }}</template>
+            <template v-else-if="isCurrent">{{ t('radio.resume') }}</template>
+            <template v-else>{{ t('radio.play') }}</template>
           </button>
 
           <a

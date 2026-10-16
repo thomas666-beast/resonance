@@ -105,7 +105,10 @@ watch(
         <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-app truncate">
           {{ player.currentRadio.name }}
         </h1>
-        <p class="text-accent font-medium mt-2 tracking-wider text-sm">LIVE</p>
+        <p v-if="player.loading" class="text-accent font-medium mt-2 text-sm">
+          {{ $t('radio.connecting') }}
+        </p>
+        <p v-else class="text-accent font-medium mt-2 tracking-wider text-sm">LIVE</p>
         <p
           v-if="radio.nowPlaying[player.currentRadio.id]"
           class="text-muted mt-2 truncate"
@@ -254,17 +257,24 @@ watch(
 
         <button
           @click="player.toggle()"
-          class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent text-white flex items-center
+          :disabled="player.loading"
+          class="w-20 h-20 rounded-full bg-accent text-white flex items-center
                  justify-center shadow-2xl hover:scale-105 active:scale-95
-                 transition-transform shrink-0"
-          :aria-label="player.playing ? 'Pause' : 'Play'"
+                 disabled:opacity-70 disabled:cursor-not-allowed transition-transform"
+          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
         >
-          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-7 h-7 md:w-9 md:h-9 fill-current">
+          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-9 h-9 animate-spin">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                    stroke-dashoffset="14" />
+          </svg>
+          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-9 h-9 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-7 h-7 md:w-9 md:h-9 fill-current ml-1">
+               viewBox="0 0 24 24" class="w-9 h-9 fill-current ml-1">
             <path d="M8 5v14l11-7z" />
           </svg>
         </button>
