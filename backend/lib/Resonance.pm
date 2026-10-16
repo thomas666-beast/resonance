@@ -125,7 +125,6 @@ sub _register_routes ($self) {
             return $c->render(status => 401, text => 'invalid token');
         }
 
-        
         $log->debug("WS client connected (user $payload->{sub})");
 
         my @unlisten;
@@ -133,18 +132,39 @@ sub _register_routes ($self) {
 
         for my $channel (qw(resonance:scan resonance:radio resonance:podcast)) {
             push @unlisten, $pubsub->listen($channel => sub ($pubsub, $message, $chan) {
+                # The socket may have been torn down between the Redis
+                # notification and this callback firing.
+                return unless $c->tx;
                 $c->send({json => {channel => $chan, data => $message}});
             });
         }
 
-        $c->on(finish => sub {
-            $log->debug("WS client disconnected");
-            $pubsub->unlisten($_) for @unlisten;
-        });
+        my $cleaned_up = 0;
+        my $cleanup = sub {
+            return if $cleaned_up++;
+            for my $u (@unlisten) {
+                eval { $pubsub->unlisten($u) };
+            }
+            @unlisten = ();
+        };
 
-        $c->on(message => sub ($c, $msg) {
-            $log->debug("WS message ignored: $msg");
-        });
+        eval {
+            $c->on(finish => sub {
+                $log->debug("WS client disconnected");
+                $cleanup->();
+            });
+        };
+
+        eval {
+            $c->on(message => sub ($c, $msg) {
+                $log->debug("WS message ignored: $msg");
+            });
+        };
+
+        # Belt and braces: if the reactor tears the connection down
+        # without firing finish (rare, but observed on abrupt TCP
+        # resets), the closure still runs when the process ends.
+        $c->stash(ws_cleanup => $cleanup);
     });
 
     my $api = $r->under('/api')->to('Base#api_headers');
@@ -200,6 +220,7 @@ sub _routes_library ($self, $authed) {
     $authed->get('/stream/:track_id')  ->to('Stream#stream');
     $authed->get('/cover/:album_id')   ->to('Cover#show');
     $authed->get('/search')            ->to('Search#search');
+    $authed->get('/tracks/:id/lyrics')  ->to('Lyrics#for_track');
 }
 
 sub _routes_favorites ($self, $authed) {

@@ -11,6 +11,7 @@ use Resonance::Controller::Subsonic::Media  ();
 use Resonance::Controller::Subsonic::Lists  ();
 use Resonance::Controller::Subsonic::Podcasts ();
 use Resonance::Subsonic::Extensions qw(extensions);
+use Resonance::Controller::Subsonic::Lyrics ();
 
 # ── dispatcher ───────────────────────────────────────────
 
@@ -86,6 +87,10 @@ sub dispatch ($c) {
 
         #OpenSubsonic
         getOpenSubsonicExtensions => \&_get_open_subsonic_extensions,
+    
+        # Lyrics
+        getLyrics           => \&Resonance::Controller::Subsonic::Lyrics::get_lyrics,
+        getLyricsBySongId   => \&Resonance::Controller::Subsonic::Lyrics::get_lyrics_by_song_id,
     );
 
     my $handler = $handlers{$method};

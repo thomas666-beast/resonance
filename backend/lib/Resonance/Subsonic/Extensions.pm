@@ -10,6 +10,7 @@ sub extensions () {
     return [
         { name => 'formPost',        versions => [1] },
         { name => 'transcodeOffset', versions => [1] },
+        { name => 'songLyrics',      versions => [1] },
     ];
 }
 
