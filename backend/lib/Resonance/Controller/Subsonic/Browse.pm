@@ -67,7 +67,7 @@ sub _album_rows ($db, $where = '', $order = '', @args) {
 
     return $db->query(
         qq{SELECT a.id, a.title, a.year, a.artist_id, ar.name AS artist_name,
-                  a.created_at,
+                  a.mb_id, a.created_at,
                   (SELECT count(*) FROM tracks t
                     WHERE t.album_id = a.id AND t.missing_at IS NULL) AS song_count,
                   (SELECT COALESCE(SUM(duration_ms), 0) / 1000
@@ -89,7 +89,7 @@ sub _song_rows ($db, $where = '', $order = '', @args) {
                   t.duration_ms, t.bitrate, t.path, t.file_size,
                   t.album_id, al.title AS album_title, al.year,
                   t.artist_id, ar.name AS artist_name,
-                  t.codec
+                  t.codec, t.channels, t.sample_rate, t.mb_id
              FROM tracks t
              LEFT JOIN albums  al ON al.id = t.album_id
              LEFT JOIN artists ar ON ar.id = t.artist_id
@@ -117,7 +117,7 @@ sub get_indexes ($c) {
 
 sub get_artists ($c) {
     my $artists = $c->pg->db->query(
-        q{SELECT ar.id, ar.name, ar.sort_name,
+        q{SELECT ar.id, ar.name, ar.sort_name, ar.mb_id,
                  (SELECT count(*) FROM albums al
                    WHERE al.artist_id = ar.id
                      AND EXISTS (SELECT 1 FROM tracks t
@@ -167,7 +167,7 @@ sub get_artist ($c) {
         unless $id;
 
     my $artist = $c->pg->db->query(
-        'SELECT id, name FROM artists WHERE id = ?', $id,
+        'SELECT id, name, sort_name, mb_id FROM artists WHERE id = ?', $id,
     )->hash;
     return $c->render(json => subsonic_error(70, 'Artist not found'))
         unless $artist;
@@ -183,6 +183,10 @@ sub get_artist ($c) {
             name       => $artist->{name},
             albumCount => scalar @$albums,
             album      => [ map { format_album($_) } @$albums ],
+            (defined $artist->{sort_name} && length $artist->{sort_name}
+                ? (sortName => $artist->{sort_name}) : ()),
+            (defined $artist->{mb_id} && length $artist->{mb_id}
+                ? (musicBrainzId => $artist->{mb_id}) : ()),
         },
     }));
 }

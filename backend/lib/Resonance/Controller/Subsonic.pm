@@ -10,6 +10,7 @@ use Resonance::Controller::Subsonic::Browse ();
 use Resonance::Controller::Subsonic::Media  ();
 use Resonance::Controller::Subsonic::Lists  ();
 use Resonance::Controller::Subsonic::Podcasts ();
+use Resonance::Subsonic::Extensions qw(extensions);
 
 # ── dispatcher ───────────────────────────────────────────
 
@@ -82,6 +83,9 @@ sub dispatch ($c) {
         refreshPodcasts           => \&Resonance::Controller::Subsonic::Podcasts::refresh_podcasts,
         downloadPodcastEpisode    => \&Resonance::Controller::Subsonic::Podcasts::download_podcast_episode,
         deletePodcastEpisode      => \&Resonance::Controller::Subsonic::Podcasts::delete_podcast_episode,
+
+        #OpenSubsonic
+        getOpenSubsonicExtensions => \&_get_open_subsonic_extensions,
     );
 
     my $handler = $handlers{$method};
@@ -110,6 +114,12 @@ sub _get_music_folders ($c) {
         musicFolders => {
             musicFolder => [ format_music_folder(1, 'Media') ],
         },
+    }));
+}
+
+sub _get_open_subsonic_extensions ($c) {
+    $c->render(json => subsonic_response({
+        openSubsonicExtensions => extensions(),
     }));
 }
 

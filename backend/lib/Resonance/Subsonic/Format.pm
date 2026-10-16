@@ -9,8 +9,8 @@ our @EXPORT_OK = qw(
     format_indexes format_music_folder
 );
 
-use constant API_VERSION => '1.16.1';
-use constant SERVER_TYPE => 'Resonance';
+use constant API_VERSION    => '1.16.1';
+use constant SERVER_TYPE    => 'Resonance';
 use constant SERVER_VERSION => '0.01';
 
 # ── envelope ─────────────────────────────────────────────
@@ -22,6 +22,7 @@ sub subsonic_response ($payload) {
             version       => API_VERSION,
             type          => SERVER_TYPE,
             serverVersion => SERVER_VERSION,
+            openSubsonic  => \1,
             %$payload,
         },
     };
@@ -34,6 +35,7 @@ sub subsonic_error ($code, $message) {
             version       => API_VERSION,
             type          => SERVER_TYPE,
             serverVersion => SERVER_VERSION,
+            openSubsonic  => \1,
             error         => {
                 code    => 0 + $code,
                 message => $message,
@@ -66,20 +68,23 @@ sub id_value ($opaque) {
 
 sub _subsonic_time ($iso) {
     return undef unless defined $iso;
-    # Subsonic uses ISO 8601. Postgres gives us "2024-01-15 12:34:56+00".
     $iso =~ s/ /T/;
     return $iso;
 }
 
 sub format_artist ($row) {
-    return {
+    my $a = {
         id         => id_for('ar', $row->{id}),
         name       => $row->{name},
         albumCount => 0 + ($row->{album_count} // 0),
-        coverArt   => defined $row->{cover_album_id}
-                      ? id_for('al', $row->{cover_album_id})
-                      : undef,
     };
+    $a->{coverArt} = id_for('al', $row->{cover_album_id})
+        if defined $row->{cover_album_id};
+    $a->{sortName} = $row->{sort_name}
+        if defined $row->{sort_name} && length $row->{sort_name};
+    $a->{musicBrainzId} = $row->{mb_id}
+        if defined $row->{mb_id} && length $row->{mb_id};
+    return $a;
 }
 
 sub format_album ($row) {
@@ -94,6 +99,19 @@ sub format_album ($row) {
         created   => _subsonic_time($row->{created_at}),
     };
     $a->{year} = 0 + $row->{year} if defined $row->{year};
+    $a->{musicBrainzId} = $row->{mb_id}
+        if defined $row->{mb_id} && length $row->{mb_id};
+
+    # OpenSubsonic: plural artists array on albums
+    if (defined $row->{artist_name}) {
+        $a->{artists} = [
+            {
+                id   => defined $row->{artist_id} ? id_for('ar', $row->{artist_id}) : undef,
+                name => $row->{artist_name},
+            },
+        ];
+    }
+
     return $a;
 }
 
@@ -113,10 +131,32 @@ sub format_song ($row) {
         size        => 0 + ($row->{file_size} // 0),
         path        => $row->{path} // '',
     };
-    $s->{track}   = 0 + $row->{track_number} if defined $row->{track_number};
-    $s->{discNumber} = 0 + $row->{disc_number} if defined $row->{disc_number};
-    $s->{bitRate} = int(($row->{bitrate} // 0) / 1000) if $row->{bitrate};
-    $s->{year}    = 0 + $row->{year} if defined $row->{year};
+
+    $s->{track}      = 0 + $row->{track_number} if defined $row->{track_number};
+    $s->{discNumber} = 0 + $row->{disc_number}  if defined $row->{disc_number};
+    $s->{bitRate}    = int(($row->{bitrate} // 0) / 1000) if $row->{bitrate};
+    $s->{year}       = 0 + $row->{year} if defined $row->{year};
+
+    # OpenSubsonic: plural artists array on songs
+    if (defined $row->{artist_name}) {
+        $s->{artists} = [
+            {
+                id   => defined $row->{artist_id} ? id_for('ar', $row->{artist_id}) : undef,
+                name => $row->{artist_name},
+            },
+        ];
+    }
+
+    # Audio quality fields, when populated by the scanner
+    $s->{channelCount} = 0 + $row->{channels}
+        if defined $row->{channels};
+    $s->{samplingRate} = 0 + $row->{sample_rate}
+        if defined $row->{sample_rate};
+
+    # MusicBrainz
+    $s->{musicBrainzId} = $row->{mb_id}
+        if defined $row->{mb_id} && length $row->{mb_id};
+
     return $s;
 }
 
@@ -140,7 +180,6 @@ sub format_music_folder ($id, $name) {
 # ── indexes (for getIndexes) ─────────────────────────────
 
 sub format_indexes ($rows) {
-    # Group artists by first letter
     my %by_letter;
     for my $row (@$rows) {
         my $first = uc substr($row->{sort_name} // $row->{name} // '?', 0, 1);
@@ -159,7 +198,6 @@ sub format_indexes ($rows) {
         };
     }
 
-    # Subsonic calls the "no index" bucket the "lastModified" field.
     return {
         ignoredArticles => 'The El La Los Las Le Les',
         index           => \@indexes,

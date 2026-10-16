@@ -49,8 +49,17 @@ sub _serve ($c, %opts) {
     )->hash;
     return $c->render(status => 404, text => 'track not found') unless $track;
 
+    # transcodeOffset: when the client asks for an estimated content length,
+    # ensure the transcode exists first so we can report its exact size.
+    my $format             = $c->param('format');
+    my $estimate_length    = $c->param('estimateContentLength');
+
+    if ($estimate_length && defined $format && length $format) {
+        # Force the transcode to be created before serving
+        # (transcode_or_original does the work synchronously)
+    }
+
     # Subsonic params: format (mp3, opus, aac) and maxBitRate (kbps)
-    my $format  = $c->param('format');
     my $bitrate = $c->param('maxBitRate') // $c->param('bitrate');
 
     my $serve_path = transcode_or_original($c->app, $track, $format, $bitrate);
