@@ -306,15 +306,60 @@ sub get_random_songs ($c) {
 }
 
 sub get_songs_by_genre ($c) {
-    $c->render(json => subsonic_response({
+    my $genre  = $c->param('genre');
+    my $count  = _clamp($c->param('count'),  1, 500);
+    my $offset = _clamp($c->param('offset'), 0, 100_000);
+    $count = 50 unless defined $c->param('count');
+
+    return $c->render(json => subsonic_response({
         songsByGenre => { song => [] },
+    })) unless defined $genre && length $genre;
+
+    my $songs = _song_rows(
+        $c->pg->db,
+        q{JOIN tracks_genres tg ON tg.track_id = t.id
+          JOIN genres g        ON g.id = tg.genre_id
+         WHERE lower(g.name) = lower(?)},
+        'ORDER BY t.title LIMIT ? OFFSET ?',
+        $genre, $count, $offset,
+    );
+
+    $c->render(json => subsonic_response({
+        songsByGenre => {
+            song => [ map { format_song($_) } @$songs ],
+        },
     }));
 }
 
 # ── genres & info stubs ──────────────────────────────────
 
 sub get_genres ($c) {
-    $c->render(json => subsonic_response({ genres => { genre => [] } }));
+    my $rows = $c->pg->db->query(
+        q{SELECT g.name,
+                 count(*) AS song_count,
+                 COALESCE(SUM(t.duration_ms), 0) / 1000 AS duration_sec
+            FROM genres g
+            JOIN tracks_genres tg ON tg.genre_id = g.id
+            JOIN tracks t         ON t.id = tg.track_id
+           WHERE t.missing_at IS NULL
+        GROUP BY g.name
+        ORDER BY lower(g.name)},
+    )->hashes->to_array;
+
+    $c->render(json => subsonic_response({
+        genres => {
+            genre => [
+                map {
+                    {
+                        songCount => 0 + $_->{song_count},
+                        albumCount => 0,
+                        duration   => 0 + $_->{duration_sec},
+                        value      => $_->{name},
+                    }
+                } @$rows
+            ],
+        },
+    }));
 }
 
 sub get_artist_info2 ($c) {
