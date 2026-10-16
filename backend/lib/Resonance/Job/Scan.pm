@@ -259,6 +259,9 @@ sub _process_file ($app, $file, $scan_path_id) {
     # Sync genres (split multi-genre tags into separate rows)
     _sync_track_genres($app, $track_id, $tags->{genre});
 
+    # Index a local .lrc file, if present
+    _sync_track_lyrics($app, $track_id, $file);
+
     return { inserted => !$existing, track_id => $track_id };
 }
 
@@ -390,6 +393,47 @@ sub _sync_track_genres ($app, $track_id, $genre_string) {
             $track_id, $genre_id,
         );
     }
+}
+
+# ── lyrics indexing ──────────────────────────────────────
+
+sub _sync_track_lyrics ($app, $track_id, $file) {
+    return unless $track_id;
+
+    (my $base = $file) =~ s/\.[^.]+$//;
+
+    my $lrc;
+    for my $ext (qw(lrc LRC)) {
+        my $candidate = "$base.$ext";
+        if (-f $candidate && -r $candidate) {
+            $lrc = $candidate;
+            last;
+        }
+    }
+    return unless $lrc;
+
+    my $content = eval { Mojo::File::path($lrc)->slurp };
+    return unless defined $content && length $content;
+
+    unless (utf8::is_utf8($content)) {
+        require Encode;
+        $content = eval { Encode::decode('UTF-8', $content, 1) }
+                // Encode::decode('ISO-8859-1', $content);
+    }
+
+    require Resonance::Lyrics::Parser;
+    my $synced = Resonance::Lyrics::Parser::is_lrc($content) ? 1 : 0;
+
+    $app->pg->db->query(
+        q{INSERT INTO track_lyrics (track_id, source, synced, content)
+          VALUES (?, 'lrc', ?, ?)
+          ON CONFLICT (track_id) DO UPDATE
+              SET source     = 'lrc',
+                  synced     = EXCLUDED.synced,
+                  content    = EXCLUDED.content,
+                  fetched_at = now()},
+        $track_id, $synced, $content,
+    );
 }
 
 1;
