@@ -119,10 +119,13 @@ sub _from_lrclib ($app, $track) {
         artist_name => $artist,
         track_name  => $title,
     );
-    $query{album_name} = $track->{album_title}
-        if defined $track->{album_title} && length $track->{album_title};
-    $query{duration} = int($track->{duration_ms} / 1000)
-        if defined $track->{duration_ms} && $track->{duration_ms} > 0;
+
+
+    # We will see if we will need it
+    # $query{album_name} = $track->{album_title}
+    #     if defined $track->{album_title} && length $track->{album_title};
+    # $query{duration} = int($track->{duration_ms} / 1000)
+    #     if defined $track->{duration_ms} && $track->{duration_ms} > 0;
 
     my $url = Mojo::URL->new("$LRCLIB_BASE/get")->query(%query);
 
