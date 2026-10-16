@@ -18,7 +18,29 @@ sub stream ($c)   { _serve($c, disposition => undef) }
 sub download ($c) { _serve($c, disposition => 'attachment') }
 
 sub _serve ($c, %opts) {
-    my $id = id_value($c->param('id'));
+    my $id_param = $c->param('id') // '';
+
+    # Podcast episodes come through as "podcast-episode-N"
+    if ($id_param =~ /^podcast-episode-(\d+)$/) {
+        my $ep_id = $1;
+        my $uid   = $c->stash('subsonic_user')->{id};
+
+        my $ep = $c->pg->db->query(
+            q{SELECT e.id, e.audio_url
+                FROM podcast_episodes e
+                JOIN user_podcast_subscriptions s
+                  ON s.feed_id = e.feed_id AND s.user_id = ?
+               WHERE e.id = ?},
+            $uid, $ep_id,
+        )->hash;
+
+        return $c->render(status => 404, text => 'episode not found')
+            unless $ep;
+
+        return serve_episode($c, $ep);
+    }
+
+    my $id = id_value($id_param);
     return $c->render(status => 400, text => 'invalid id') unless $id;
 
     my $track = $c->pg->db->query(

@@ -3,9 +3,8 @@ use Mojo::Base 'Mojolicious::Controller', -signatures;
 
 use Mojo::UserAgent;
 use Mojo::URL;
-use Mojo::File qw(path);
-use Digest::SHA qw(sha256_hex);
-use Resonance::Util::Range qw(serve_file_with_range);
+use Resonance::Util::PodcastFetch qw(serve_episode);
+
 
 my $UA_STRING         = 'Mozilla/5.0 (compatible; Resonance/0.01)';
 my $MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;    # 500 MB
@@ -299,25 +298,7 @@ sub stream_episode ($c) {
     return $c->render(status => 404, text => 'episode not found')
         unless $ep;
 
-    # Fast path: already cached
-    if (my $cached = _cached_episode_path($c, $ep)) {
-        return serve_file_with_range($c, $cached, mime => 'audio/mpeg');
-    }
-
-    # Slow path: download without blocking the event loop
-    $c->render_later;
-    _download_episode_p($c, $ep)->then(
-        sub ($file) {
-            serve_file_with_range($c, $file, mime => 'audio/mpeg');
-        },
-        sub ($err) {
-            chomp $err;
-            $c->app->log->warn("Podcast: download failed for episode $ep->{id}: $err");
-            $c->render(status => 502, text => 'upstream unavailable');
-        },
-    )->catch(sub ($err) {
-        $c->app->log->error("Podcast: serving episode $ep->{id} failed: $err");
-    });
+    return serve_episode($c, $ep);
 }
 
 # ── playback progress ────────────────────────────────────
