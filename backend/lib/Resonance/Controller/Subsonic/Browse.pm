@@ -86,7 +86,7 @@ sub _song_rows ($db, $where = '', $order = '', @args) {
 
     return $db->query(
         qq{SELECT t.id, t.title, t.track_number, t.disc_number,
-                  t.duration_ms, t.bitrate, t.path, t.file_size,
+                  t.duration_ms, t.bitrate, t.file_size,
                   t.album_id, al.title AS album_title, al.year,
                   t.artist_id, ar.name AS artist_name,
                   t.codec, t.channels, t.sample_rate, t.mb_id

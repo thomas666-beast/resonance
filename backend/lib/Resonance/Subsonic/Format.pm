@@ -45,8 +45,6 @@ sub subsonic_error ($code, $message) {
 }
 
 # ── opaque IDs ───────────────────────────────────────────
-# Format: "ar-42", "al-7", "tr-1024", "pl-3"
-# Clients treat these as opaque strings.
 
 sub id_for ($type, $id) {
     return "$type-$id";
@@ -70,6 +68,24 @@ sub _subsonic_time ($iso) {
     return undef unless defined $iso;
     $iso =~ s/ /T/;
     return $iso;
+}
+
+# Build a synthetic path so clients that expect the field don't
+# crash, without exposing our real filesystem layout.
+sub _synthetic_path ($row) {
+    my $artist = $row->{artist_name}  // 'Unknown Artist';
+    my $album  = $row->{album_title}  // 'Unknown Album';
+    my $track  = $row->{track_number} // 0;
+    my $title  = $row->{title}        // 'Untitled';
+    my $ext    = $row->{codec}        // 'mp3';
+
+    # Strip any characters that would be odd in a path
+    for ($artist, $album, $title) {
+        s{[/\\]}{-}g;
+    }
+
+    my $n = sprintf '%02d', $track;
+    return "/$artist/$album/$n - $title.$ext";
 }
 
 sub format_artist ($row) {
@@ -102,7 +118,6 @@ sub format_album ($row) {
     $a->{musicBrainzId} = $row->{mb_id}
         if defined $row->{mb_id} && length $row->{mb_id};
 
-    # OpenSubsonic: plural artists array on albums
     if (defined $row->{artist_name}) {
         $a->{artists} = [
             {
@@ -129,7 +144,7 @@ sub format_song ($row) {
         contentType => $row->{codec} // 'audio/mpeg',
         suffix      => $row->{codec} // '',
         size        => 0 + ($row->{file_size} // 0),
-        path        => $row->{path} // '',
+        path        => _synthetic_path($row),
     };
 
     $s->{track}      = 0 + $row->{track_number} if defined $row->{track_number};
@@ -137,7 +152,6 @@ sub format_song ($row) {
     $s->{bitRate}    = int(($row->{bitrate} // 0) / 1000) if $row->{bitrate};
     $s->{year}       = 0 + $row->{year} if defined $row->{year};
 
-    # OpenSubsonic: plural artists array on songs
     if (defined $row->{artist_name}) {
         $s->{artists} = [
             {
@@ -147,13 +161,11 @@ sub format_song ($row) {
         ];
     }
 
-    # Audio quality fields, when populated by the scanner
     $s->{channelCount} = 0 + $row->{channels}
         if defined $row->{channels};
     $s->{samplingRate} = 0 + $row->{sample_rate}
         if defined $row->{sample_rate};
 
-    # MusicBrainz
     $s->{musicBrainzId} = $row->{mb_id}
         if defined $row->{mb_id} && length $row->{mb_id};
 
@@ -176,8 +188,6 @@ sub format_playlist ($row) {
 sub format_music_folder ($id, $name) {
     return { id => $id, name => $name };
 }
-
-# ── indexes (for getIndexes) ─────────────────────────────
 
 sub format_indexes ($rows) {
     my %by_letter;
