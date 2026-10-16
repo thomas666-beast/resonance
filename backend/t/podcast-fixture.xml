@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Test Podcast</title>
+    <description>A minimal test feed for Resonance.</description>
+    <link>https://example.com/podcast</link>
+    <language>en-us</language>
+    <itunes:author>Jane Host</itunes:author>
+    <itunes:image href="https://example.com/cover.jpg" />
+    <item>
+      <title>Episode One</title>
+      <description>The first episode.</description>
+      <guid isPermaLink="false">ep-001</guid>
+      <pubDate>Mon, 01 Jan 2024 12:00:00 +0000</pubDate>
+      <itunes:duration>1:23:45</itunes:duration>
+      <itunes:episode>1</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <enclosure url="https://example.com/ep1.mp3"
+                 length="12345"
+                 type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Episode Two</title>
+      <description>The second episode.</description>
+      <guid isPermaLink="false">ep-002</guid>
+      <pubDate>Tue, 02 Jan 2024 12:00:00 +0000</pubDate>
+      <itunes:duration>1800</itunes:duration>
+      <itunes:episode>2</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <enclosure url="https://example.com/ep2.mp3"
+                 length="23456"
+                 type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Not an episode</title>
+      <description>This item has no audio enclosure.</description>
+      <guid isPermaLink="false">ep-003</guid>
+    </item>
+  </channel>
+</rss>

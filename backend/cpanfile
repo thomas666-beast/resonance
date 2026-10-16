@@ -35,4 +35,6 @@ requires 'Audio::Scan';
 requires 'Minion';
 requires 'File::Find::Rule';
 
+# ── Other ──────────────────────────────────────
+requires 'XML::LibXML';
 requires 'Mojolicious::Plugin::SecurityHeader';
