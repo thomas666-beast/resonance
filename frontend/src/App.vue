@@ -8,6 +8,7 @@ import { useFavoritesStore } from '@/stores/favorites'
 import { usePlaylistsStore } from '@/stores/playlists'
 import { usePlayerStore } from '@/stores/player'
 import { useRadioStore } from '@/stores/radio'
+import { usePodcastsStore } from '@/stores/podcasts'
 import { useKeyboard } from '@/composables/useKeyboard'
 import PlayerBar from '@/components/PlayerBar.vue'
 import ScanButton from '@/components/ScanButton.vue'
@@ -18,10 +19,9 @@ import MobileDrawer from '@/components/MobileDrawer.vue'
 import MobileSearchOverlay from '@/components/MobileSearchOverlay.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import AppSidebar from '@/components/AppSidebar.vue'
+import AppLogo from '@/components/AppLogo.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import QueuePanel from '@/components/QueuePanel.vue'
-import { usePodcastsStore } from '@/stores/podcasts'
-const podcastsStore = usePodcastsStore()
 
 const auth = useAuthStore()
 const appStore = useAppStore()
@@ -31,6 +31,7 @@ const scan = useScanStore()
 const favorites = useFavoritesStore()
 const playlistsStore = usePlaylistsStore()
 const radioStore = useRadioStore()
+const podcastsStore = usePodcastsStore()
 const player = usePlayerStore()
 
 const isNowPlaying = computed(() => route.name === 'now-playing')
@@ -83,8 +84,8 @@ async function logout() {
 </script>
 
 <template>
+  <!-- Login / register / now-playing: no sidebar, no top nav -->
   <div v-if="!auth.accessToken || isNowPlaying" class="min-h-screen flex flex-col bg-app text-app">
-    <!-- Login, register, or now-playing: no sidebar, no top nav -->
     <ScanProgress v-if="!isNowPlaying && auth.accessToken" />
     <main class="flex-1" :class="!isNowPlaying && 'pb-12'">
       <RouterView v-slot="{ Component }">
@@ -97,18 +98,15 @@ async function logout() {
     <ToastHost />
   </div>
 
+  <!-- Authenticated shell -->
   <div v-else class="min-h-screen flex bg-app text-app">
-    <!-- Desktop sidebar (lg+) -->
     <AppSidebar />
 
-    <!-- Main column -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- Top bar -->
       <header class="sticky top-0 z-20 border-b border-app bg-surface/80 backdrop-blur-sm">
         <!-- Desktop top bar (lg+) -->
         <div class="hidden lg:flex px-6 h-16 items-center gap-4">
           <SearchBox />
-
           <div class="ml-auto flex items-center gap-2 text-sm shrink-0">
             <ScanButton />
             <UserMenu />
@@ -130,8 +128,8 @@ async function logout() {
             </svg>
           </button>
 
-          <RouterLink to="/" class="text-lg font-semibold tracking-tight text-app">
-            {{ $t('app.title') }}
+          <RouterLink to="/" class="flex items-center" :title="$t('app.title')">
+            <AppLogo variant="wordmark" :height="50" />
           </RouterLink>
 
           <button
@@ -153,7 +151,10 @@ async function logout() {
 
       <ScanProgress />
 
-      <main class="flex-1" :class="player.current || player.currentRadio || player.currentEpisode ? 'pb-24' : 'pb-12'">
+      <main
+        class="flex-1"
+        :class="(player.current || player.currentRadio || player.currentEpisode) ? 'pb-24' : 'pb-12'"
+      >
         <RouterView v-slot="{ Component }">
           <Transition name="page" mode="out-in">
             <component :is="Component" :key="route.path" />
@@ -161,7 +162,6 @@ async function logout() {
         </RouterView>
       </main>
 
-      <!-- Bottom fixed stack: player + footer -->
       <div class="fixed bottom-0 left-0 right-0 lg:left-[var(--sidebar-width,15rem)] z-30 pointer-events-none">
         <div class="pointer-events-auto">
           <PlayerBar @open-queue="queueOpen = true" />

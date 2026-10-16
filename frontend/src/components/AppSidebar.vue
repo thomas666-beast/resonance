@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useScanStore } from '@/stores/scan'
 import { usePlayerStore } from '@/stores/player'
 import ScanButton from './ScanButton.vue'
+import AppLogo from './AppLogo.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -91,13 +92,9 @@ watchEffect(() => {
   >
     <!-- Header -->
     <div class="h-16 border-b border-app flex items-center px-4 shrink-0">
-      <RouterLink
-        to="/"
-        class="text-lg font-semibold tracking-tight text-app truncate"
-        :title="$t('app.title')"
-      >
-        <span v-if="!collapsed">{{ $t('app.title') }}</span>
-        <span v-else class="text-xl">♪</span>
+      <RouterLink to="/" class="flex items-center" :title="$t('app.title')">
+        <AppLogo v-if="!collapsed" variant="wordmark" :height="26" />
+        <AppLogo v-else              variant="icon"     :height="32" />
       </RouterLink>
     </div>
 

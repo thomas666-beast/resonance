@@ -10,6 +10,7 @@ import { usePlayerStore } from '@/stores/player'
 import { SUPPORTED_LOCALES } from '@/i18n'
 import ThemeToggle from './ThemeToggle.vue'
 import ScanButton from './ScanButton.vue'
+import AppLogo from './AppLogo.vue'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -81,8 +82,8 @@ async function logout() {
       >
         <!-- Header -->
         <div class="px-5 py-4 border-b border-app flex items-center">
-          <RouterLink to="/" class="text-lg font-semibold tracking-tight text-app" @click="emit('close')">
-            {{ $t('app.title') }}
+          <RouterLink to="/" class="flex items-center" @click="emit('close')">
+            <AppLogo variant="wordmark" :height="26" />
           </RouterLink>
           <button
             @click="emit('close')"
