@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useEventsStore } from './events'
+import { useToastStore } from './toast'
+import { i18n } from '@/i18n'
 
 export interface ScanEvent {
   event: 'started' | 'progress' | 'reconciling' | 'finished'
@@ -34,7 +36,24 @@ export const useScanStore = defineStore('scan', () => {
     total.value > 0 ? Math.min(100, Math.round((processed.value / total.value) * 100)) : 0,
   )
 
-  let registered = false
+  function notifyResult() {
+    const r = lastResult.value
+    if (!r) return
+    const toast = useToastStore()
+    const t = i18n.global.t
+
+    if (r.missing > 0) {
+      toast.info(t('scan.doneWithMissing', {
+        inserted: r.inserted,
+        missing:  r.missing,
+      }))
+    } else {
+      toast.success(t('scan.done', {
+        inserted: r.inserted,
+        updated:  r.updated,
+      }))
+    }
+  }
 
   function handleEvent(ev: ScanEvent) {
     if (ev.event === 'started') {
@@ -61,8 +80,11 @@ export const useScanStore = defineStore('scan', () => {
         missing: ev.missing ?? 0,
         restored: ev.restored ?? 0,
       }
+      notifyResult()
     }
   }
+
+  let registered = false
 
   function connect() {
     if (!registered) {
@@ -75,8 +97,7 @@ export const useScanStore = defineStore('scan', () => {
   }
 
   function disconnect() {
-    // The events store is shared; nothing to do here unless
-    // scan is the last user. For simplicity we leave the socket open.
+    // The events store is shared; nothing to do here
   }
 
   return {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/api/client'
 import { useScanStore } from '@/stores/scan'
@@ -20,22 +20,6 @@ async function trigger() {
     triggering.value = false
   }
 }
-
-// Fire a summary toast when a scan finishes
-watch(() => scan.lastResult, (r) => {
-  if (!r) return
-  if (r.missing > 0) {
-    toast.info(t('scan.doneWithMissing', {
-      inserted: r.inserted,
-      missing:  r.missing,
-    }))
-  } else {
-    toast.success(t('scan.done', {
-      inserted: r.inserted,
-      updated:  r.updated,
-    }))
-  }
-})
 </script>
 
 <template>
