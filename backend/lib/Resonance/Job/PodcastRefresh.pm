@@ -136,7 +136,8 @@ sub register ($minion) {
                 $feed_id,
             )->hash;
 
-            $redis->pubsub->notify('resonance:podcast' => encode_json({
+        eval {
+            $redis->db->publish('resonance:podcast' => encode_json({
                 event    => 'refreshed',
                 feed_id  => $feed_id + 0,
                 title    => $feed_row ? $feed_row->{title} : undef,
@@ -144,6 +145,8 @@ sub register ($minion) {
                 updated  => $updated,
                 total    => scalar @{ $parsed->{episodes} },
             }));
+        };
+        $app->log->warn("Podcast: publish failed: $@") if $@;
 
             1;
         } or do {

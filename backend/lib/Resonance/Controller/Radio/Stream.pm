@@ -72,10 +72,14 @@ sub stream ($c) {
         my $redis = $c->app->redis;
         $redis->db->set_p("radio:$id:now_playing", encode('UTF-8', $title), 'EX', 21600)
             ->catch(sub ($err) { $log->warn("Radio: redis set failed: $err") });
-        $redis->pubsub->notify('resonance:radio' => encode_json({
-            station_id => $id + 0,
-            title      => $title,
-        }));
+
+        eval {
+            $redis->db->publish('resonance:radio' => encode_json({
+                station_id => $id + 0,
+                title      => $title,
+            }));
+        };
+        $log->warn("Radio: publish failed: $@") if $@;
     };
 
     # Fires for the initial request AND for every redirect hop

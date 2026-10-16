@@ -1,6 +1,7 @@
 package Resonance::Job::Scan;
 use Mojo::Base -strict, -signatures;
 
+use Mojo::JSON qw(encode_json);
 use File::Find::Rule;
 use Audio::Scan;
 use Mojo::File qw(path);
@@ -39,12 +40,12 @@ sub register ($minion) {
         my $total = scalar @files;
         $app->log->info("Scan started: $total files under $root");
 
-        $job->note(total => $total);
-        $redis->pubsub->notify('resonance:scan', {
+        eval { $redis->db->publish('resonance:scan' => encode_json({
             event        => 'started',
             scan_path_id => $scan_path_id,
             total        => $total,
-        });
+        })) };
+        $app->log->warn("Scan: publish failed: $@") if $@;
 
         my $processed = 0;
         my $inserted  = 0;
@@ -68,21 +69,24 @@ sub register ($minion) {
 
             if ($processed % 50 == 0) {
                 $job->note(processed => $processed);
-                $redis->pubsub->notify('resonance:scan', {
+
+                eval { $redis->db->publish('resonance:scan' => encode_json({
                     event        => 'progress',
                     scan_path_id => $scan_path_id,
                     processed    => $processed,
                     total        => $total,
-                });
+                })) };
+                $app->log->warn("Scan: publish failed: $@") if $@;
             }
         }
 
         # ── reconciliation phase ────────────────────────
         # Publish a phase-change so the UI can switch labels.
-        $redis->pubsub->notify('resonance:scan', {
+        eval { $redis->db->publish('resonance:scan' => encode_json({
             event        => 'reconciling',
             scan_path_id => $scan_path_id,
-        });
+        })) };
+        $app->log->warn("Scan: publish failed: $@") if $@;
 
         my ($missing, $restored) = _reconcile($app, $root, \%seen);
 
@@ -91,7 +95,7 @@ sub register ($minion) {
             $scan_path_id,
         );
 
-        $redis->pubsub->notify('resonance:scan', {
+        eval { $redis->db->publish('resonance:scan' => encode_json({
             event        => 'finished',
             scan_path_id => $scan_path_id,
             total        => $total,
@@ -100,7 +104,8 @@ sub register ($minion) {
             failed       => $failed,
             missing      => $missing,
             restored     => $restored,
-        });
+        })) };
+        $app->log->warn("Scan: publish failed: $@") if $@;
 
         $job->finish({
             total     => $total,
