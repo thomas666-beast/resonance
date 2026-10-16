@@ -23,7 +23,12 @@
     "theme": "Theme",
     "settings": "Settings",
     "radio": "Radio",
-    "podcasts": "Podcasts"
+    "podcasts": "Podcasts",
+    "groupLibrary": "Library",
+    "groupMedia": "Media",
+    "groupSystem": "System",
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
   },
   "auth": {
     "signIn": "Sign in",
@@ -255,5 +260,10 @@
     "invalidUrl": "Feed URL must start with http:// or https://",
     "lastFetched": "Updated",
     "never": "never"
+  },
+  "theme": {
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System"
   }
 }
