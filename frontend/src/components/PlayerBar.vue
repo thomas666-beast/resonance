@@ -277,15 +277,12 @@ watch(
 
         <button
           @click="openLyrics"
-          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+          class="w-9 h-9 rounded-full hover:bg-surface-2 transition-colors
+                text-muted hover:text-app flex items-center justify-center"
           :aria-label="$t('lyrics.title')"
           :title="$t('lyrics.title')"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 6h16M4 12h16M4 18h10" />
-          </svg>
+          <span class="font-bold text-xs tracking-wide">LYR</span>
         </button>
 
         <button
@@ -445,14 +442,11 @@ watch(
           </div>
           <button
             @click.stop.prevent="openLyrics"
-            class="p-2 rounded-full active:bg-surface-2 transition-colors text-muted"
+            class="w-9 h-9 rounded-full active:bg-surface-2 transition-colors
+                  text-muted flex items-center justify-center"
             :aria-label="$t('lyrics.title')"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                 class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 6h16M4 12h16M4 18h10" />
-            </svg>
+            <span class="font-bold text-xs tracking-wide">LYR</span>
           </button>
           <button
             @click.stop.prevent="emit('open-queue')"

@@ -337,16 +337,13 @@ onMounted(() => {
 
         <button
           @click="lyricsOpen = !lyricsOpen"
-          class="p-2 rounded-full hover:bg-surface-2 transition-colors"
+          class="w-10 h-10 rounded-full hover:bg-surface-2 transition-colors
+                flex items-center justify-center"
           :class="lyricsOpen ? 'text-accent' : 'text-muted'"
           :aria-label="$t('lyrics.title')"
           :title="$t('lyrics.title')"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 6h16M4 12h16M4 18h10" />
-          </svg>
+          <span class="font-bold text-xs tracking-wide">LYR</span>
         </button>
       </div>
 
