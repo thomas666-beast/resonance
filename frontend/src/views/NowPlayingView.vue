@@ -1,19 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useRadioStore } from '@/stores/radio'
 import AlbumCover from '@/components/AlbumCover.vue'
-import { ref } from 'vue'
-import QueuePanel from '@/components/QueuePanel.vue'
-
-const queueOpen = ref(false)
-
-const emit = defineEmits<{ (e: 'open-queue'): void }>()
 
 const router = useRouter()
 const player = usePlayerStore()
 const favorites = useFavoritesStore()
+const radio = useRadioStore()
 
 const current = computed(() => player.current)
 
@@ -54,10 +50,107 @@ async function toggleFavorite() {
   if (!current.value) return
   await favorites.toggle(current.value.id)
 }
+
+// Fetch the current ICY title when a station starts playing
+watch(
+  () => player.currentRadio?.id,
+  (id) => {
+    if (id && !radio.nowPlaying[id]) radio.fetchNowPlaying(id)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
-  <div v-if="current" class="relative min-h-screen overflow-hidden">
+  <!-- ── Radio live ────────────────────────────────────── -->
+  <div
+    v-if="player.isLive && player.currentRadio"
+    class="relative min-h-screen overflow-hidden"
+  >
+    <div class="absolute inset-0 -z-10 bg-app" />
+
+    <header class="px-8 py-6 flex items-center anim-fade-slide">
+      <button
+        @click="back"
+        class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted"
+        :aria-label="$t('nowPlaying.back')"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+             class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <p class="ml-auto text-label">{{ $t('nowPlaying.label') }}</p>
+    </header>
+
+    <main class="flex flex-col items-center px-4 md:px-8 pb-16 max-w-2xl mx-auto">
+      <div class="w-full max-w-md mt-4 mb-10 anim-scale-fade">
+        <div class="aspect-square rounded-2xl bg-surface-2 flex items-center justify-center overflow-hidden shadow-2xl">
+          <img
+            v-if="player.currentRadio.logo_url"
+            :src="player.currentRadio.logo_url"
+            class="w-full h-full object-cover"
+            alt=""
+          />
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-1/3 h-1/3 fill-none stroke-muted" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M4.22 4.22a12 12 0 0 0 0 15.56M19.78 4.22a12 12 0 0 1 0 15.56M7.76 7.76a6 6 0 0 0 0 8.48M16.24 7.76a6 6 0 0 1 0 8.48" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="w-full text-center mb-10 anim-fade-slide" style="animation-delay: 80ms">
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-app truncate">
+          {{ player.currentRadio.name }}
+        </h1>
+        <p class="text-accent font-medium mt-2 tracking-wider text-sm">LIVE</p>
+        <p
+          v-if="radio.nowPlaying[player.currentRadio.id]"
+          class="text-muted mt-2 truncate"
+        >
+          {{ radio.nowPlaying[player.currentRadio.id] }}
+        </p>
+        <p v-else-if="player.currentRadio.genre" class="text-muted mt-2">
+          {{ player.currentRadio.genre }}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-8 anim-fade-slide" style="animation-delay: 240ms">
+        <button
+          @click="player.toggle()"
+          class="w-20 h-20 rounded-full bg-accent text-white flex items-center
+                 justify-center shadow-2xl hover:scale-105 active:scale-95
+                 transition-transform"
+          :aria-label="player.playing ? 'Pause' : 'Play'"
+        >
+          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-9 h-9 fill-current">
+            <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-9 h-9 fill-current ml-1">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
+
+        <button
+          @click="player.stop()"
+          class="p-3 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+          :aria-label="$t('radio.stop')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── Library track ────────────────────────────────── -->
+  <div v-else-if="current" class="relative min-h-screen overflow-hidden">
     <div
       v-if="coverSrc"
       class="absolute inset-0 -z-10 opacity-30 dark:opacity-40"
@@ -187,26 +280,20 @@ async function toggleFavorite() {
         </button>
 
         <button
-          @click="queueOpen = true"
-          class="relative p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+          @click="router.push('/')"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
           :aria-label="$t('queue.title')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M4 6h16M4 12h10M4 18h13" />
           </svg>
-          <span
-            v-if="player.upcoming.length"
-            class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full
-                   bg-accent text-white text-[10px] font-medium flex items-center justify-center"
-          >
-            {{ player.upcoming.length }}
-          </span>
         </button>
       </div>
     </main>
   </div>
 
+  <!-- ── Nothing playing ──────────────────────────────── -->
   <div v-else class="min-h-screen flex flex-col items-center justify-center text-center px-8">
     <div class="w-24 h-24 rounded-full bg-surface-2 flex items-center justify-center mb-6">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -217,7 +304,5 @@ async function toggleFavorite() {
     </div>
     <h2 class="text-title text-app mb-2">{{ $t('nowPlaying.nothing') }}</h2>
     <p class="text-muted">{{ $t('nowPlaying.nothingHint') }}</p>
-
-    <QueuePanel :open="queueOpen" @close="queueOpen = false" />
   </div>
 </template>

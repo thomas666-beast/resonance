@@ -20,6 +20,8 @@ import AppFooter from '@/components/AppFooter.vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import QueuePanel from '@/components/QueuePanel.vue'
+import { usePodcastsStore } from '@/stores/podcasts'
+const podcastsStore = usePodcastsStore()
 
 const auth = useAuthStore()
 const appStore = useAppStore()
@@ -46,6 +48,8 @@ onMounted(() => {
     favorites.load()
     playlistsStore.load()
     radioStore.load()
+    radioStore.connect()
+    podcastsStore.connect()
   }
 })
 
@@ -55,6 +59,8 @@ watch(() => auth.accessToken, (t) => {
     favorites.load()
     playlistsStore.load()
     radioStore.load()
+    radioStore.connect()
+    podcastsStore.connect()
   } else {
     scan.disconnect()
     player.stop()

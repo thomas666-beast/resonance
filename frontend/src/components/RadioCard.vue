@@ -68,9 +68,14 @@ function isCurrent(): boolean {
       <div class="min-w-0 flex-1 pt-1">
         <div class="text-sm font-medium text-app truncate">{{ station.name }}</div>
         <div class="text-xs text-muted truncate mt-1">
-          <template v-if="station.genre">{{ station.genre }}</template>
-          <template v-if="station.genre && station.bitrate"> · </template>
-          <template v-if="station.bitrate">{{ station.bitrate }} kbps</template>
+          <template v-if="isCurrent() && radio.nowPlaying[station.id]">
+            <span class="text-accent">{{ radio.nowPlaying[station.id] }}</span>
+          </template>
+          <template v-else>
+            <template v-if="station.genre">{{ station.genre }}</template>
+            <template v-if="station.genre && station.bitrate"> · </template>
+            <template v-if="station.bitrate">{{ station.bitrate }} kbps</template>
+          </template>
         </div>
 
         <div class="mt-4 flex items-center gap-3">

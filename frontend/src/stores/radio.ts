@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/client'
+import { useEventsStore } from './events'
 
 export interface RadioStation {
   id: number
@@ -17,10 +18,13 @@ export interface RadioStation {
 }
 
 export const useRadioStore = defineStore('radio', () => {
-  const stations = ref<RadioStation[]>([])
-  const isAdmin  = ref(false)
-  const loaded   = ref(false)
-  const loading  = ref(false)
+  const events = useEventsStore()
+
+  const stations   = ref<RadioStation[]>([])
+  const isAdmin    = ref(false)
+  const loaded     = ref(false)
+  const loading    = ref(false)
+  const nowPlaying = ref<Record<number, string | null>>({})
 
   async function load() {
     loading.value = true
@@ -55,5 +59,37 @@ export const useRadioStore = defineStore('radio', () => {
     stations.value = stations.value.filter((s) => s.id !== id)
   }
 
-  return { stations, isAdmin, loaded, loading, load, create, update, remove }
+  async function fetchNowPlaying(id: number) {
+    try {
+      const { data } = await api.get(`/radio/${id}/now-playing`)
+      nowPlaying.value = { ...nowPlaying.value, [id]: data.title ?? null }
+    } catch {
+      // silent
+    }
+  }
+
+  function handleEvent(data: any) {
+    if (!data || typeof data !== 'object') return
+    const id = data.station_id
+    if (typeof id !== 'number') return
+    if (typeof data.title === 'string' && data.title.length) {
+      nowPlaying.value = { ...nowPlaying.value, [id]: data.title }
+    }
+  }
+
+  let registered = false
+  function connect() {
+    if (!registered) {
+      events.onMessage((channel, data) => {
+        if (channel === 'resonance:radio') handleEvent(data)
+      })
+      registered = true
+    }
+    events.connect()
+  }
+
+  return {
+    stations, isAdmin, loaded, loading, nowPlaying,
+    load, create, update, remove, fetchNowPlaying, connect,
+  }
 })

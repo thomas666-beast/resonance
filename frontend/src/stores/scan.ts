@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useEventsStore } from './events'
 
 export interface ScanEvent {
   event: 'started' | 'progress' | 'reconciling' | 'finished'
@@ -14,6 +15,8 @@ export interface ScanEvent {
 }
 
 export const useScanStore = defineStore('scan', () => {
+  const events = useEventsStore()
+
   const connected = ref(false)
   const scanning = ref(false)
   const reconciling = ref(false)
@@ -27,70 +30,11 @@ export const useScanStore = defineStore('scan', () => {
     restored: number
   } | null>(null)
 
-  let ws: WebSocket | null = null
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-  let backoff = 1000
-
   const percent = computed(() =>
     total.value > 0 ? Math.min(100, Math.round((processed.value / total.value) * 100)) : 0,
   )
 
-  function connect() {
-    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-      return
-    }
-
-    const token = (window as any).__resonance_access_token
-    if (!token) return
-
-    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const url = `${proto}//${location.host}/api/ws?token=${encodeURIComponent(token)}`
-
-    ws = new WebSocket(url)
-
-    ws.onopen = () => {
-      connected.value = true
-      backoff = 1000
-    }
-
-    ws.onmessage = (e) => {
-      try {
-        const { data } = JSON.parse(e.data)
-        handleEvent(data)
-      } catch {
-        // ignore malformed frames
-      }
-    }
-
-    ws.onclose = () => {
-      connected.value = false
-      ws = null
-      scheduleReconnect()
-    }
-
-    ws.onerror = () => {
-      ws?.close()
-    }
-  }
-
-  function scheduleReconnect() {
-    if (reconnectTimer) return
-    reconnectTimer = setTimeout(() => {
-      reconnectTimer = null
-      backoff = Math.min(backoff * 2, 30000)
-      connect()
-    }, backoff)
-  }
-
-  function disconnect() {
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer)
-      reconnectTimer = null
-    }
-    ws?.close()
-    ws = null
-    connected.value = false
-  }
+  let registered = false
 
   function handleEvent(ev: ScanEvent) {
     if (ev.event === 'started') {
@@ -118,6 +62,21 @@ export const useScanStore = defineStore('scan', () => {
         restored: ev.restored ?? 0,
       }
     }
+  }
+
+  function connect() {
+    if (!registered) {
+      events.onMessage((channel, data) => {
+        if (channel === 'resonance:scan') handleEvent(data)
+      })
+      registered = true
+    }
+    events.connect()
+  }
+
+  function disconnect() {
+    // The events store is shared; nothing to do here unless
+    // scan is the last user. For simplicity we leave the socket open.
   }
 
   return {

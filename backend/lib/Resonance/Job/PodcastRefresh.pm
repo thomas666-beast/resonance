@@ -3,13 +3,15 @@ use Mojo::Base -strict, -signatures;
 
 use Mojo::UserAgent;
 use Resonance::Podcast::Parser qw(parse_feed);
+use Mojo::JSON qw(encode_json);
 
 my $UA_STRING = 'Mozilla/5.0 (compatible; Resonance/0.01)';
 
 sub register ($minion) {
     $minion->add_task(podcast_refresh => sub ($job, $feed_id) {
-        my $app = $job->app;
-        my $pg  = $app->pg;
+        my $app   = $job->app;
+        my $pg    = $app->pg;
+        my $redis = $app->redis;
 
         my $feed = $pg->db->query(
             'SELECT id, feed_url FROM podcast_feeds WHERE id = ?',
@@ -128,6 +130,21 @@ sub register ($minion) {
             }
 
             $db->query('COMMIT');
+
+            my $feed_row = $pg->db->query(
+                'SELECT title, feed_url, image_url FROM podcast_feeds WHERE id = ?',
+                $feed_id,
+            )->hash;
+
+            $redis->pubsub->notify('resonance:podcast' => encode_json({
+                event    => 'refreshed',
+                feed_id  => $feed_id + 0,
+                title    => $feed_row ? $feed_row->{title} : undef,
+                inserted => $inserted,
+                updated  => $updated,
+                total    => scalar @{ $parsed->{episodes} },
+            }));
+
             1;
         } or do {
             my $err = $@;

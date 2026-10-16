@@ -3,6 +3,10 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import AlbumCover from './AlbumCover.vue'
+import { useRadioStore } from '@/stores/radio'
+import { watch } from 'vue'
+
+const radio = useRadioStore()
 
 const emit = defineEmits<{ (e: 'open-queue'): void }>()
 
@@ -43,6 +47,14 @@ function onSeekCommit() {
 function onVolumeInput(e: Event) {
   player.setVolume(Number((e.target as HTMLInputElement).value))
 }
+
+watch(
+  () => player.currentRadio?.id,
+  (id) => {
+    if (id && !radio.nowPlaying[id]) radio.fetchNowPlaying(id)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -68,7 +80,12 @@ function onVolumeInput(e: Event) {
             <div class="text-sm font-medium truncate">{{ player.currentRadio.name }}</div>
             <div class="text-xs text-muted truncate">
               <span class="text-accent font-medium">LIVE</span>
-              <span v-if="player.currentRadio.genre"> · {{ player.currentRadio.genre }}</span>
+              <template v-if="radio.nowPlaying[player.currentRadio.id]">
+                · {{ radio.nowPlaying[player.currentRadio.id] }}
+              </template>
+              <template v-else-if="player.currentRadio.genre">
+                · {{ player.currentRadio.genre }}
+              </template>
             </div>
           </div>
         </div>
@@ -269,7 +286,12 @@ function onVolumeInput(e: Event) {
             <div class="text-sm font-medium truncate text-app">{{ player.currentRadio.name }}</div>
             <div class="text-xs text-muted truncate">
               <span class="text-accent font-medium">LIVE</span>
-              <span v-if="player.currentRadio.genre"> · {{ player.currentRadio.genre }}</span>
+              <template v-if="radio.nowPlaying[player.currentRadio.id]">
+                · {{ radio.nowPlaying[player.currentRadio.id] }}
+              </template>
+              <template v-else-if="player.currentRadio.genre">
+                · {{ player.currentRadio.genre }}
+              </template>
             </div>
           </div>
           <button

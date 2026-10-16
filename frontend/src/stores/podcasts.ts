@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/client'
+import { useEventsStore } from './events'
 
 export interface PodcastFeed {
   id: number
@@ -18,9 +19,12 @@ export interface PodcastFeed {
 }
 
 export const usePodcastsStore = defineStore('podcasts', () => {
+  const events  = useEventsStore()
+
   const feeds   = ref<PodcastFeed[]>([])
   const loaded  = ref(false)
   const loading = ref(false)
+  const lastRefresh = ref<{ feed_id: number; inserted: number; updated: number } | null>(null)
 
   async function load() {
     loading.value = true
@@ -35,8 +39,6 @@ export const usePodcastsStore = defineStore('podcasts', () => {
 
   async function subscribe(feedUrl: string) {
     const { data } = await api.post('/podcasts', { feed_url: feedUrl })
-    // The refresh job runs async; reload after a short delay
-    await new Promise((r) => setTimeout(r, 800))
     await load()
     return data as { feed_id: number; job_id: number }
   }
@@ -52,10 +54,35 @@ export const usePodcastsStore = defineStore('podcasts', () => {
 
   async function refreshAll() {
     const { data } = await api.post('/podcasts/refresh-all')
-    await new Promise((r) => setTimeout(r, 1500))
-    await load()
     return data as { queued: number }
   }
 
-  return { feeds, loaded, loading, load, subscribe, unsubscribe, refresh, refreshAll }
+  function handleEvent(data: any) {
+    if (!data || data.event !== 'refreshed') return
+    const id = data.feed_id
+    if (typeof id !== 'number') return
+    lastRefresh.value = {
+      feed_id: id,
+      inserted: data.inserted ?? 0,
+      updated: data.updated ?? 0,
+    }
+    // Reload the full list — cheap since it's a single query
+    load()
+  }
+
+  let registered = false
+  function connect() {
+    if (!registered) {
+      events.onMessage((channel, data) => {
+        if (channel === 'resonance:podcast') handleEvent(data)
+      })
+      registered = true
+    }
+    events.connect()
+  }
+
+  return {
+    feeds, loaded, loading, lastRefresh,
+    load, subscribe, unsubscribe, refresh, refreshAll, connect,
+  }
 })

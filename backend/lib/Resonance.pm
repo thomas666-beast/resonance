@@ -118,24 +118,28 @@ sub _register_routes ($self) {
             return $c->render(status => 401, text => 'missing token');
         }
 
-        my $payload = verify_access_token($c->config->{jwt}{secret}, $token);
+        my $payload = Resonance::Auth::verify_access_token(
+            $c->config->{jwt}{secret}, $token,
+        );
         unless ($payload) {
             return $c->render(status => 401, text => 'invalid token');
         }
 
+        
         $log->debug("WS client connected (user $payload->{sub})");
 
-        my $channel = 'resonance:scan';
-        my $pubsub  = $c->redis->pubsub;
+        my @unlisten;
+        my $pubsub = $c->redis->pubsub;
 
-        my $cb = $pubsub->listen($channel => sub ($pubsub, $message, $channel) {
-            return unless $c->tx;   # connection already gone
-            $c->send({json => {channel => $channel, data => $message}});
-        });
+        for my $channel (qw(resonance:scan resonance:radio resonance:podcast)) {
+            push @unlisten, $pubsub->listen($channel => sub ($pubsub, $message, $chan) {
+                $c->send({json => {channel => $chan, data => $message}});
+            });
+        }
 
-        $c->on(finish => sub ($c, $code, $reason) {
-            $log->debug("WS client disconnected (" . ($code // '-') . ")");
-            $pubsub->unlisten($channel => $cb);
+        $c->on(finish => sub {
+            $log->debug("WS client disconnected");
+            $pubsub->unlisten($_) for @unlisten;
         });
 
         $c->on(message => sub ($c, $msg) {
