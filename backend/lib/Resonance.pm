@@ -95,6 +95,8 @@ sub _register_plugins ($self) {
 
     require Resonance::Job::Scan;
     Resonance::Job::Scan::register($self->minion);
+    require Resonance::Job::PodcastRefresh;
+    Resonance::Job::PodcastRefresh::register($self->minion);
 
     $self->plugin('SecurityHeader');
 }
@@ -151,8 +153,9 @@ sub _register_routes ($self) {
     $self->_routes_favorites($authed);
     $self->_routes_playlists($authed);
     $self->_routes_home($authed);
-    $self->_routes_admin($authed);
     $self->_routes_radio($authed);
+    $self->_routes_podcasts($authed);
+    $self->_routes_admin($authed);
 }
 
 sub _routes_subsonic ($self, $r) {
@@ -240,6 +243,16 @@ sub _routes_radio ($self, $authed) {
     $authed->post  ('/radio')               ->to('Radio#create');
     $authed->patch ('/radio/:id')           ->to('Radio#update');
     $authed->delete('/radio/:id')           ->to('Radio#remove');
+}
+
+sub _routes_podcasts ($self, $authed) {
+    $authed->get   ('/podcasts')                ->to('Podcasts#list_feeds');
+    $authed->post  ('/podcasts')                ->to('Podcasts#subscribe');
+    $authed->post  ('/podcasts/refresh-all')    ->to('Podcasts#refresh_all');
+    $authed->get   ('/podcasts/:id')            ->to('Podcasts#show_feed');
+    $authed->delete('/podcasts/:id')            ->to('Podcasts#unsubscribe');
+    $authed->post  ('/podcasts/:id/refresh')    ->to('Podcasts#refresh_feed');
+    $authed->get   ('/podcast-episodes/:id')    ->to('Podcasts#show_episode');
 }
 
 1;
