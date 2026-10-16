@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
-import AlbumCover from './AlbumCover.vue'
 import { useRadioStore } from '@/stores/radio'
-import { watch } from 'vue'
-
-const radio = useRadioStore()
+import AlbumCover from './AlbumCover.vue'
 
 const emit = defineEmits<{ (e: 'open-queue'): void }>()
 
+const router = useRouter()
 const player = usePlayerStore()
+const radio = useRadioStore()
 
 const seeking = ref(false)
 const seekValue = ref(0)
@@ -48,6 +47,11 @@ function onVolumeInput(e: Event) {
   player.setVolume(Number((e.target as HTMLInputElement).value))
 }
 
+function openLyrics() {
+  router.push({ name: 'now-playing', query: { lyrics: '1' } })
+}
+
+// Fetch the current ICY title if we mount with a station already playing
 watch(
   () => player.currentRadio?.id,
   (id) => {
@@ -93,21 +97,23 @@ watch(
         <button
           @click="player.toggle()"
           :disabled="player.loading"
-          class="w-11 h-11 rounded-full bg-accent text-white flex items-center justify-center
-                  active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
-                  transition-transform shrink-0"
+          class="w-10 h-10 rounded-full bg-accent text-white flex items-center
+                 justify-center hover:scale-105 active:scale-95 disabled:opacity-70
+                 disabled:cursor-not-allowed transition-transform"
           :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
         >
           <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24" class="w-5 h-5 animate-spin">
+               viewBox="0 0 24 24" class="w-4 h-4 animate-spin">
             <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
                     stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
                     stroke-dashoffset="14" />
           </svg>
-          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current ml-0.5">
+          <svg v-else xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
             <path d="M8 5v14l11-7z" />
           </svg>
         </button>
@@ -131,7 +137,7 @@ watch(
         </div>
       </template>
 
-      <!-- Podcast episode -->
+      <!-- Podcast -->
       <template v-else-if="player.isPodcast && player.currentEpisode">
         <div class="flex items-center gap-3 min-w-0 flex-1">
           <div class="w-10 h-10 rounded bg-surface-2 flex items-center justify-center overflow-hidden shrink-0">
@@ -231,29 +237,32 @@ watch(
               <path d="M6 6h2v12H6zM9.5 12l8.5 6V6z" />
             </svg>
           </button>
-        <button
-          @click="player.toggle()"
-          :disabled="player.loading"
-          class="w-10 h-10 rounded-full bg-accent text-white flex items-center
-                 justify-center hover:scale-105 active:scale-95 disabled:opacity-70
-                 disabled:cursor-not-allowed transition-transform"
-          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
-        >
-          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-4 h-4 animate-spin">
-            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
-                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
-                    stroke-dashoffset="14" />
-          </svg>
-          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-4 h-4 fill-current">
-            <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-          </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </button>
+          <button
+            @click="player.toggle()"
+            :disabled="player.loading"
+            class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center
+                   hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
+                   transition-transform"
+            :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
+          >
+            <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24" class="w-4 h-4 animate-spin">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                      stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                      stroke-dashoffset="14" />
+            </svg>
+            <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4 fill-current">
+              <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4 fill-current ml-0.5">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+          <button @click="player.next()" class="p-2 rounded-full hover:bg-surface-2 transition-colors text-app" aria-label="Next">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 fill-current">
+              <path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z" />
+            </svg>
+          </button>
         </div>
 
         <div class="flex-1 flex items-center gap-3">
@@ -265,6 +274,19 @@ watch(
           />
           <span class="text-xs text-muted w-10 tabular">{{ fmt(player.duration) }}</span>
         </div>
+
+        <button
+          @click="openLyrics"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
+          :aria-label="$t('lyrics.title')"
+          :title="$t('lyrics.title')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6h16M4 12h16M4 18h10" />
+          </svg>
+        </button>
 
         <button
           @click="emit('open-queue')"
@@ -421,6 +443,17 @@ watch(
               <span v-if="player.current.album_title"> · {{ player.current.album_title }}</span>
             </div>
           </div>
+          <button
+            @click.stop.prevent="openLyrics"
+            class="p-2 rounded-full active:bg-surface-2 transition-colors text-muted"
+            :aria-label="$t('lyrics.title')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 class="w-5 h-5 fill-none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6h16M4 12h16M4 18h10" />
+            </svg>
+          </button>
           <button
             @click.stop.prevent="emit('open-queue')"
             class="relative p-2 rounded-full active:bg-surface-2 transition-colors text-muted"

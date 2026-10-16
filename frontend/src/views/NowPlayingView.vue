@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, watch, ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import api from '@/api/client'
 import { usePlayerStore } from '@/stores/player'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useRadioStore } from '@/stores/radio'
 import AlbumCover from '@/components/AlbumCover.vue'
+import LyricsPanel from '@/components/LyricsPanel.vue'
 
 const router = useRouter()
+const route = useRoute()
 const player = usePlayerStore()
 const favorites = useFavoritesStore()
 const radio = useRadioStore()
@@ -51,7 +54,47 @@ async function toggleFavorite() {
   await favorites.toggle(current.value.id)
 }
 
-// Fetch the current ICY title when a station starts playing
+// ── lyrics ──────────────────────────────────────────────
+
+const lyricsOpen = ref(false)
+const lyricsLoading = ref(false)
+const lyricsData = ref<{
+  content: string | null
+  synced: boolean
+  lines: { start_ms?: number; value: string }[] | null
+}>({ content: null, synced: false, lines: null })
+
+async function loadLyrics(trackId: number) {
+  lyricsLoading.value = true
+  lyricsData.value = { content: null, synced: false, lines: null }
+  try {
+    const { data } = await api.get(`/tracks/${trackId}/lyrics`)
+    if (data.lyrics) {
+      lyricsData.value = {
+        content: data.lyrics.content,
+        synced:  !!data.lyrics.synced,
+        lines:   data.lyrics.lines ?? null,
+      }
+    }
+  } catch {
+    // silent — panel shows "no lyrics available"
+  } finally {
+    lyricsLoading.value = false
+  }
+}
+
+watch(
+  () => current.value?.id,
+  (id) => {
+    if (id && lyricsOpen.value) loadLyrics(id)
+  },
+)
+
+watch(lyricsOpen, (open) => {
+  if (open && current.value?.id) loadLyrics(current.value.id)
+})
+
+// Radio now-playing title, if we're streaming a station
 watch(
   () => player.currentRadio?.id,
   (id) => {
@@ -59,6 +102,10 @@ watch(
   },
   { immediate: true },
 )
+
+onMounted(() => {
+  if (route.query.lyrics === '1') lyricsOpen.value = true
+})
 </script>
 
 <template>
@@ -123,12 +170,19 @@ watch(
       <div class="flex items-center gap-8 anim-fade-slide" style="animation-delay: 240ms">
         <button
           @click="player.toggle()"
+          :disabled="player.loading"
           class="w-20 h-20 rounded-full bg-accent text-white flex items-center
                  justify-center shadow-2xl hover:scale-105 active:scale-95
-                 transition-transform"
-          :aria-label="player.playing ? 'Pause' : 'Play'"
+                 disabled:opacity-70 disabled:cursor-not-allowed transition-transform"
+          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
         >
-          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-9 h-9 animate-spin">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
+                    stroke-dashoffset="14" />
+          </svg>
+          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 24 24" class="w-9 h-9 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
@@ -179,7 +233,6 @@ watch(
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </button>
-
       <p class="ml-auto text-label">{{ $t('nowPlaying.label') }}</p>
     </header>
 
@@ -257,24 +310,17 @@ watch(
 
         <button
           @click="player.toggle()"
-          :disabled="player.loading"
-          class="w-20 h-20 rounded-full bg-accent text-white flex items-center
+          class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-accent text-white flex items-center
                  justify-center shadow-2xl hover:scale-105 active:scale-95
-                 disabled:opacity-70 disabled:cursor-not-allowed transition-transform"
-          :aria-label="player.loading ? 'Loading' : (player.playing ? 'Pause' : 'Play')"
+                 transition-transform shrink-0"
+          :aria-label="player.playing ? 'Pause' : 'Play'"
         >
-          <svg v-if="player.loading" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-9 h-9 animate-spin">
-            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
-                    stroke-width="3" stroke-linecap="round" stroke-dasharray="42"
-                    stroke-dashoffset="14" />
-          </svg>
-          <svg v-else-if="player.playing" xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-9 h-9 fill-current">
+          <svg v-if="player.playing" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24" class="w-7 h-7 md:w-9 md:h-9 fill-current">
             <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
           </svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24" class="w-9 h-9 fill-current ml-1">
+               viewBox="0 0 24 24" class="w-7 h-7 md:w-9 md:h-9 fill-current ml-1">
             <path d="M8 5v14l11-7z" />
           </svg>
         </button>
@@ -290,15 +336,35 @@ watch(
         </button>
 
         <button
-          @click="router.push('/')"
-          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-muted hover:text-app"
-          :aria-label="$t('queue.title')"
+          @click="lyricsOpen = !lyricsOpen"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors"
+          :class="lyricsOpen ? 'text-accent' : 'text-muted'"
+          :aria-label="$t('lyrics.title')"
+          :title="$t('lyrics.title')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M4 6h16M4 12h10M4 18h13" />
+               class="w-6 h-6 fill-none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6h16M4 12h16M4 18h10" />
           </svg>
         </button>
+      </div>
+
+      <div
+        v-if="lyricsOpen"
+        class="w-full mt-10 rounded-2xl bg-surface/60 border border-app
+               backdrop-blur-sm overflow-hidden anim-fade-slide"
+        style="height: 50vh"
+      >
+        <LyricsPanel
+          v-if="!lyricsLoading"
+          :content="lyricsData.content"
+          :synced="lyricsData.synced"
+          :lines="lyricsData.lines"
+        />
+        <div v-else class="h-full flex items-center justify-center text-muted text-sm">
+          {{ $t('common.loading') }}
+        </div>
       </div>
     </main>
   </div>

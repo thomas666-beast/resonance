@@ -276,5 +276,10 @@
     "dark": "Dark",
     "light": "Light",
     "system": "System"
+  },
+  "lyrics": {
+    "title": "Lyrics",
+    "none": "No lyrics available for this track.",
+    "source": "Lyrics from {source}"
   }
 }
